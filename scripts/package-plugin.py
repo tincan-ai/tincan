@@ -26,7 +26,7 @@ def build(root, output, go, server, version, targets, marketplace=None):
         plugin = Path(tmp) / 'tincan'
         shutil.copytree(root / 'plugins/tincan', plugin,
                         ignore=shutil.ignore_patterns('bin', '__pycache__', '.DS_Store', '.env', '.env.*'))
-        for manifest_name in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json'):
+        for manifest_name in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json', 'plugin.json'):
             path = plugin / manifest_name
             manifest = json.loads(path.read_text())
             manifest['version'] = version
@@ -56,12 +56,12 @@ def build(root, output, go, server, version, targets, marketplace=None):
                             '-o', str(plugin / 'bin/tincan.exe'), './cmd/tincan-launcher'], cwd=root,
                            env=dict(os.environ, GOOS='windows', GOARCH='386', CGO_ENABLED='0'), check=True)
         shutil.copy2(root / 'LICENSE', plugin / 'LICENSE')
-        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md'):
+        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md', 'CLIENTS.md'):
             (plugin / 'docs').mkdir(exist_ok=True)
             shutil.copy2(root / 'docs' / name, plugin / 'docs' / name)
         shutil.copytree(root / 'sdk', plugin / 'sdk', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
         (plugin / 'README.md').write_text(
-            '# Tincan\n\nInstall the plugin in your harness, then ask “Connect me to Tincan” '
+            '# Tincan\n\nSee [client setup](docs/CLIENTS.md) for Cursor, Copilot CLI, OpenClaw, and Hermes.\n\nInstall the plugin in your harness, then ask “Connect me to Tincan” '
             'or paste a Tincan invite link. The plugin selects its bundled executable automatically. '
             'No Go, Python, Node, package manager, or separate CLI installation is required.\n\n'
             'Credentials and connection state are stored outside the plugin installation directory. '

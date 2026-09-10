@@ -94,9 +94,21 @@ def main():
         # native process driver there instead of rewriting the manifest command.
         state = root / 'private state'; state.mkdir()
         env = clean_env(state)
-        for name in ('.codex-plugin/plugin.json', '.mcp.json'):
+        for name in ('.codex-plugin/plugin.json', '.mcp.json', 'mcp.json'):
             initialized = probe(command_for(plugin, name), env, root, driver)
             assert initialized['result']['serverInfo']['version'] == metadata['version']
+        # Launch each documented client entry, including paths containing spaces.
+        for host in ('cursor', 'copilot', 'openclaw', 'hermes'):
+            config = json.loads((plugin / 'clients' / (host + '.json')).read_text())
+            servers = config['mcp']['servers'] if host == 'openclaw' else config['mcp_servers' if host == 'hermes' else 'mcpServers']
+            entry = servers['tincan']
+            assert entry['args'] == ['plugin', '--host', host]
+            command = entry['command'].replace('/absolute/path/to/tincan', str(plugin))
+            result = probe([command, *entry['args']], env, root, driver)
+            assert 'claude/channel' not in result['result'].get('capabilities', {}).get('experimental', {})
+        versions = {json.loads((plugin / name).read_text())['version']
+                    for name in ('plugin.json', '.claude-plugin/plugin.json', '.codex-plugin/plugin.json')}
+        assert versions == {metadata['version']}, versions
         assert not (state / 'connections').exists(), 'discovery created credentials before the first prompt'
         # Exercise argument forwarding and local sidecar discovery separately.
         command = [*driver, *command_for(plugin, '.mcp.json')[:1]]
