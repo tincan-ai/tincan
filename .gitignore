@@ -1,0 +1,9 @@
+/bin/
+/dist/
+/plugins/tincan/bin/
+.env
+.env.*
+*.log
+.DS_Store
+__pycache__/
+*.pyc

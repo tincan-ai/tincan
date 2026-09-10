@@ -1,0 +1,148 @@
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+type hookInput struct {
+	SessionID  string `json:"session_id"`
+	Event      string `json:"hook_event_name"`
+	TurnID     string `json:"turn_id,omitempty"`
+	AgentID    string `json:"agent_id,omitempty"`
+	StopActive bool   `json:"stop_hook_active,omitempty"`
+}
+type hookState struct {
+	TurnID   string           `json:"turn_id"`
+	Seen     map[string]int64 `json:"seen"`
+	LastSeen time.Time        `json:"last_seen"`
+}
+
+func hookStatePath(root, session string) string { return filepath.Join(root, "hook-"+session+".json") }
+func inboxPath(root string, c *pluginConnection) string {
+	sum := sha256.Sum256([]byte(c.Config.Server + "\n" + c.AgentID))
+	return filepath.Join(root, fmt.Sprintf("inbox-%x.json", sum[:12]))
+}
+func writePrivateJSON(path string, value any) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(filepath.Dir(path), ".state-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	if _, err = f.Write(data); err == nil {
+		err = f.Sync()
+	}
+	ce := f.Close()
+	if err != nil {
+		return err
+	}
+	if ce != nil {
+		return ce
+	}
+	return os.Rename(f.Name(), path)
+}
+
+// Presentation is task-scoped and separate from inbox acknowledgement. Hooks do
+// no network I/O, never compete for the SSE consumer lock, and fail quietly.
+func runHook(root string, in hookInput) (map[string]any, error) {
+	empty := map[string]any{}
+	if !codexTaskID.MatchString(in.SessionID) || in.AgentID != "" {
+		return empty, nil
+	}
+	switch in.Event {
+	case "SessionStart", "UserPromptSubmit", "PostToolUse", "Stop":
+	default:
+		return empty, nil
+	}
+	if _, err := os.Stat(root); os.IsNotExist(err) {
+		return empty, nil
+	}
+	path := hookStatePath(root, in.SessionID)
+	lock, err := lockInbox(path + ".lock")
+	if err != nil {
+		return empty, err
+	}
+	defer unlockInbox(lock)
+	state := hookState{Seen: map[string]int64{}}
+	if data, err := os.ReadFile(path); err == nil {
+		if err = json.Unmarshal(data, &state); err != nil {
+			return empty, err
+		}
+	}
+	if state.Seen == nil {
+		state.Seen = map[string]int64{}
+	}
+	// A new turn or a resumed session can retry unfinished work. Stop continuation
+	// within one turn cannot turn into a perpetual listening loop.
+	if in.Event == "SessionStart" || in.Event == "UserPromptSubmit" || (in.TurnID != "" && in.TurnID != state.TurnID) {
+		state.Seen = map[string]int64{}
+	}
+	if in.TurnID != "" {
+		state.TurnID = in.TurnID
+	}
+	state.LastSeen = time.Now().UTC()
+	b := &pluginBroker{root: root}
+	files, err := filepath.Glob(filepath.Join(root, "conn_*.json"))
+	if err != nil {
+		return empty, err
+	}
+	pending := []map[string]any{}
+	for _, file := range files {
+		handle := filepath.Base(file)
+		handle = handle[:len(handle)-5]
+		c, err := b.load(handle)
+		if err != nil || c.CodexThreadID != in.SessionID {
+			continue
+		}
+		var s inboxState
+		data, err := os.ReadFile(inboxPath(root, c))
+		if err != nil || json.Unmarshal(data, &s) != nil || s.Pending == nil || s.Claim != nil {
+			continue
+		}
+		e := s.Pending
+		filter := inbox{creator: c.Admin, agent: c.AgentID, workspacePeers: true}
+		if e.Seq <= s.After || !filter.accepts(*e) || state.Seen[handle] == e.Seq {
+			continue
+		}
+		if in.Event == "Stop" && in.StopActive {
+			continue
+		}
+		// Inject only a routing pointer. The full peer message is read as tool data,
+		// not promoted into the hook's developer-context instruction text.
+		pending = append(pending, map[string]any{"connection": handle, "event_seq": e.Seq, "kind": e.Kind})
+		state.Seen[handle] = e.Seq
+	}
+	if err = writePrivateJSON(path, state); err != nil {
+		return empty, err
+	}
+	if len(pending) == 0 {
+		return empty, nil
+	}
+	data, _ := json.Marshal(pending)
+	context := "Tincan has pending events for this task: " + string(data) + ". For join_requested: " + joinReviewInstructions + " For message mentions: " + inboundDispatchInstructions
+	if in.Event == "Stop" {
+		return map[string]any{"decision": "block", "reason": context}, nil
+	}
+	return map[string]any{"hookSpecificOutput": map[string]any{"hookEventName": in.Event, "additionalContext": context}}, nil
+}
+func hookCommand(input io.Reader, output io.Writer) error {
+	var in hookInput
+	result := map[string]any{}
+	if json.NewDecoder(io.LimitReader(input, 2*1024*1024)).Decode(&in) == nil {
+		if dir, err := runtimeStateDirectory(os.Getenv("TINCAN_STATE_DIR")); err == nil {
+			if v, err := runHook(dir, in); err == nil {
+				result = v
+			}
+		}
+	}
+	return json.NewEncoder(output).Encode(result)
+}
