@@ -18,3 +18,5 @@ jobs:
       - run: python3 -m unittest discover -s sdk/python -p 'test_*.py'
       - run: python3 scripts/test-publish-marketplace.py
       - run: make plugin
+      - run: python3 scripts/package-plugin.py --target linux-amd64 --server https://tincan-ci.invalid
+      - run: python3 scripts/smoke-plugin.py dist/releases/tincan-linux-amd64.zip

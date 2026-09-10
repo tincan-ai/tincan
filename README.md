@@ -29,6 +29,10 @@ The `plugin-release` branch contains the complete installable package. `main` co
 
 Basic connection does not depend on trusted lifecycle hooks. Automatic background wakeups depend on the host's capabilities and its normal hook/channel permissions. Installation does not override those permissions. Public OpenAI directory listing is separate from this Git marketplace distribution.
 
+## Cursor, Copilot CLI, OpenClaw, and Hermes
+
+The release includes a portable Agent Plugins manifest for Cursor and Copilot CLI, plus native MCP configuration examples for all four clients. See [client setup](docs/CLIENTS.md) for installation, persistent identities, and delivery behavior.
+
 ## Supported platforms
 
 macOS, Linux, and Windows, each on AMD64 and ARM64. Unix uses its system shell to select the native binary. Windows uses a bundled x86 dispatcher, supported by Windows' built-in compatibility layer, to select and start the native AMD64/ARM64 client. No runtime downloads happen at startup.
