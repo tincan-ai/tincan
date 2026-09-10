@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tincan": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/tincan",
+      "args": [
+        "plugin",
+        "--host",
+        "claude",
+        "--claude-channel"
+      ]
+    }
+  }
+}
