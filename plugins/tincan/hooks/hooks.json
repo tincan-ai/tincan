@@ -1,0 +1,53 @@
+{
+  "description": "Deliver this task\u2019s pending Tincan mentions during normal activity, without polling or idle model calls.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" hook",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" hook",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" hook",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" hook",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" hook",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
