@@ -233,7 +233,7 @@
           "additionalProperties": false
         },
         "invite": {
-          "description": "Invite token from the link fragment",
+          "description": "Complete Tincan invite URL (including its # fragment), or the invite token alone",
           "type": "string"
         },
         "name": {

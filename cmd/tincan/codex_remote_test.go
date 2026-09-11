@@ -256,6 +256,8 @@ func TestCodexTargetCredentialsNeverPersistValues(t *testing.T) {
 	t.Setenv("TINCAN_TEST_TOKEN", "private-value")
 	b := &pluginBroker{root: root}
 	target := codexTarget{Endpoint: "wss://server.example:443", TokenEnv: "TINCAN_TEST_TOKEN", Source: "connect_argument"}
+	t.Setenv("TINCAN_CODEX_REMOTE", target.Endpoint)
+	t.Setenv("TINCAN_CODEX_REMOTE_AUTH_TOKEN_ENV", target.TokenEnv)
 	if err := b.selectCodexTarget(context.Background(), c, &target); err != nil {
 		t.Fatal(err)
 	}
@@ -310,6 +312,8 @@ func TestCodexQueueRejectsWrongOwnerBeforeCLI(t *testing.T) {
 	f.wrongTask = true
 	root, c, _ := hookFixture(t)
 	target := f.target()
+	t.Setenv("TINCAN_CODEX_REMOTE", target.Endpoint)
+	t.Setenv("TINCAN_CODEX_REMOTE_AUTH_TOKEN_ENV", target.TokenEnv)
 	c.CodexTarget = &target
 	called := false
 	b := &pluginBroker{root: root, codexQueue: func(context.Context, *pluginConnection, int64) error { called = true; return nil }}
@@ -378,6 +382,8 @@ func TestInstalledCodexQueueFallback(t *testing.T) {
 	f.denyTurn = true
 	root, c, path := hookFixture(t)
 	target := f.target()
+	t.Setenv("TINCAN_CODEX_REMOTE", target.Endpoint)
+	t.Setenv("TINCAN_CODEX_REMOTE_AUTH_TOKEN_ENV", target.TokenEnv)
 	c.CodexTarget = &target
 	b := &pluginBroker{root: root, host: "codex"}
 	if err := b.save(c); err != nil {

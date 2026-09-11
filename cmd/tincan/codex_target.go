@@ -173,27 +173,31 @@ func discoverCodexTarget(ctx context.Context) (codexTarget, error) {
 	}
 	return defaultCodexTarget(), nil
 }
-func (b *pluginBroker) targetFor(c *pluginConnection) (codexTarget, error) {
-	if c.CodexTarget != nil {
-		return *c.CodexTarget, validateCodexTarget(*c.CodexTarget)
+
+// Never treat persisted or model-supplied targets as authority to read a host
+// secret. Revalidate against current launch configuration before every dial.
+func sameCodexTarget(a, b codexTarget) bool {
+	return a.Endpoint == b.Endpoint && a.TokenEnv == b.TokenEnv && a.TokenFile == b.TokenFile
+}
+func approvedCodexTarget(ctx context.Context, requested *codexTarget) (codexTarget, error) {
+	trusted, err := discoverCodexTarget(ctx)
+	if err != nil {
+		return codexTarget{}, err
 	}
-	return defaultCodexTarget(), nil
+	if requested != nil && !sameCodexTarget(*requested, trusted) {
+		return codexTarget{}, errors.New("Codex target must match trusted launch configuration; configure TINCAN_CODEX_REMOTE and TINCAN_CODEX_REMOTE_AUTH_TOKEN_ENV before starting the plugin")
+	}
+	return trusted, nil
+}
+func (b *pluginBroker) targetFor(c *pluginConnection) (codexTarget, error) {
+	return approvedCodexTarget(context.Background(), c.CodexTarget)
 }
 func (b *pluginBroker) selectCodexTarget(ctx context.Context, c *pluginConnection, explicit *codexTarget) error {
-	if explicit != nil {
-		c.CodexTarget = explicit
-	} else if c.CodexTarget == nil || c.CodexTarget.Source != "connect_argument" {
-		t, err := discoverCodexTarget(ctx)
-		if err != nil {
-			t = codexTarget{Source: "discovery_unavailable"}
-		}
-		if c.CodexTarget == nil || t.Source != "default_socket" || c.CodexTarget.Source == "default_socket" {
-			c.CodexTarget = &t
-		}
+	t, err := approvedCodexTarget(ctx, explicit)
+	if err != nil {
+		return err
 	}
-	if explicit != nil {
-		return validateCodexTarget(*c.CodexTarget)
-	}
+	c.CodexTarget = &t
 	return nil
 }
 
