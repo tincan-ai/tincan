@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "tincan": {
+      "command": "/absolute/path/to/tincan/bin/tincan",
+      "args": [
+        "plugin",
+        "--host",
+        "copilot"
+      ],
+      "type": "local",
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}

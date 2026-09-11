@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "tincan": {
+      "command": "./bin/tincan",
+      "args": [
+        "plugin",
+        "--host",
+        "codex"
+      ],
+      "cwd": ".",
+      "tool_timeout_sec": 3660
+    }
+  }
+}

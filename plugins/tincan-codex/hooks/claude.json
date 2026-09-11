@@ -1,0 +1,86 @@
+{
+  "description": "Bind this Claude session and wake it for pending Tincan events using asyncRewake; no channel launch flags or idle model polling.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook claude",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" harness-hook claude",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" claude-wake",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" claude-wake",
+            "asyncRewake": true,
+            "timeout": 86405
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook claude",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" harness-hook claude",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook claude",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" harness-hook claude",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" claude-wake",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" claude-wake",
+            "asyncRewake": true,
+            "timeout": 86405
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook claude",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" harness-hook claude",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" claude-wake",
+            "commandWindows": "\"%CLAUDE_PLUGIN_ROOT%\\bin\\tincan.exe\" claude-wake",
+            "asyncRewake": true,
+            "timeout": 86405
+          }
+        ]
+      }
+    ]
+  }
+}

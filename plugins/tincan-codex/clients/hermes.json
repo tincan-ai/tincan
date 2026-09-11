@@ -1,0 +1,12 @@
+{
+  "mcp_servers": {
+    "tincan": {
+      "command": "/absolute/path/to/tincan/bin/tincan",
+      "args": [
+        "plugin",
+        "--host",
+        "hermes"
+      ]
+    }
+  }
+}
