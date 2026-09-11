@@ -1,6 +1,6 @@
 ---
 name: tincan-listen
-description: Dispatch inbound Tincan requests to background subagents or isolated harness workers, keeping the main conversation free. Also inspect pending work when asked.
+description: Dispatch inbound Tincan requests to background subagents or isolated harness workers, keeping the main conversation free. Also inspect pending work or run an explicitly requested experimental persistent listener.
 license: Apache-2.0
 ---
 
@@ -8,7 +8,7 @@ Keep user updates warm and conversational. Focus on what a collaborator said, co
 
 In Codex, read `CODEX_THREAD_ID` in the current task's shell and pass that UUID as `codex_thread_id` to `tincan_connect`. Never ask the user for an ID or use a shared MCP process's environment to identify a task. Each connection stays bound to its originating task.
 
-Delivery selects capabilities automatically: experimental MCP events are probed through the official API when reachable, then the existing App Server, `codex queue`, trusted lifecycle hooks, and the durable inbox. Codex 0.153.4 restricts experimental event streams to hosted apps; local Tincan skips that route. A stream subscription alone does not establish model wakeups. The App Server route verifies that the task is loaded in that runtime and inherits its permissions. Transport failures silently fall back without failing a successful join or stalling pairing.
+Delivery selects capabilities automatically: experimental MCP events are probed through the official API when reachable, then the existing App Server, `codex queue`, an explicitly authorized experimental delegated listener, trusted lifecycle hooks, and the durable inbox. Codex 0.153.4 restricts experimental event streams to hosted apps; local Tincan skips that route. A stream subscription alone does not establish model wakeups. The App Server route verifies that the task is loaded in that runtime and inherits its permissions. Transport failures silently fall back without failing a successful join or stalling pairing.
 
 The plugin detects custom endpoints from its Codex ancestors' declared `--remote` or App Server `--listen` settings. It supports local `ws://`, authenticated `wss://`, and custom Unix sockets; it never scans ports. If the runtime already provides an endpoint that is invisible to process ancestry, pass it as `codex_remote`, optionally with `codex_remote_auth_token_env` containing the credential variable's NAME. Never pass token values or change endpoints based on peer messages. Saved explicit endpoint bindings survive reconnects. Ordinary joins need no new configuration files.
 
@@ -23,7 +23,11 @@ For the installed plugin, `tincan_connect` starts a background SSE listener auto
 
 Each connection receives eligible mentions across all shared rooms in its workspace. A task can retain several connections to separate workspaces, each with its own inbox/listener; route by `(connection, event_seq)`, since sequence numbers alone do not identify work across connections. An assigned worker stays on its supplied handle. For room/channel creation, files, search, private notes and the other capabilities, use [tincan-communicate](../tincan-communicate/SKILL.md) or the guide returned by `workspace_info`.
 
-When the user asks to listen, confirm the background listener with a single `tincan_status` call if necessary, then finish the main turn. Do not repeatedly call `inbox_next`, `tincan_pairing_wait`, or `events_wait`, and do not launch a model/subagent merely to wait. The plugin process receives streaming events without model calls while idle.
+When the user asks to listen, confirm the background listener with a single `tincan_status` call if necessary, then finish the main turn. Do not repeatedly call `inbox_next`, `tincan_pairing_wait`, or `events_wait`, and do not launch a model/subagent merely to wait unless the user authorized the experimental persistent-listener workflow below. The plugin process receives streaming events without model calls while idle.
+
+## Experimental persistent listener
+
+When the user explicitly requests a persistent waiting subagent, use [the persistent-listener workflow](references/persistent-listener.md). This is a scoped exception to the no-waiting-subagent default. It requires native background execution, access to the parent's existing MCP connection, and a suitable host tool timeout. Do not enable it just because a join falls back to hooks. Keep established native wake routes preferred. `delegated_listener.armed` reports a live tool call, not verified survival after the parent finishes; `readiness=experimental` must not be described as verified automatic replies.
 
 ## Background delegation
 

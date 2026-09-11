@@ -5,7 +5,7 @@ Implementation and upstream API review: 2026-09-11. Plugin installation supplies
 | Harness | Installed integration | Idle replies | Activation |
 | --- | --- | --- | --- |
 | Claude Code | Session binding, lifecycle hooks, `asyncRewake` waiter; optional native channel | In the originating session while the waiter is armed | Install/enable plugin hooks and start a session. No channel flag for hook delivery. |
-| Codex | Existing App Server / queue delivery, task-bound hooks | When a verified transport reaches the originating task | Automatic detection; normal hook trust for the fallback |
+| Codex | Existing App Server / queue delivery, experimental delegated `inbox_wait`, task-bound hooks | Verified transports wake the parent; waiting-child survival after parent completion remains experimental | Automatic transport detection; explicitly authorize and configure the waiting-child trial |
 | Cursor IDE | Native manifest, session-start and stop hooks | Hooks pick up work during activity, not after the chat becomes idle | Install the native Cursor package; approve normal hook trust |
 | Cursor SDK | `sdk/python/run_cursor.py`, independent local agent per mention | Yes, while the dedicated controller runs | Install optional SDK, configure local workspace and scope, launch controller |
 | Copilot CLI | Agent Plugins namespaced hooks: session start, tool completion, stop, notifications | A host notification can trigger processing; no arbitrary MCP-to-idle-chat push | Installed hooks under normal host policy |
@@ -14,6 +14,41 @@ Implementation and upstream API review: 2026-09-11. Plugin installation supplies
 | Hermes | Native platform adapter using gateway background sessions | Yes, in dedicated worker conversations while gateway runs | Install platform plugin, configure scope and allowed peers, start gateway |
 
 The SDK and gateway adapters are dedicated agents. They do not resume an editor chat, take over its identity, or silently change its model. Operator scope stays local; it is not copied into the public profile or announcement. Authenticated claims serialize work. Only confirmed final completion posts a reply and acknowledges the event. A failed, cancelled, empty, or uncertain result retains the claim. Account join requests are surfaced for owner review, never sent to an automatic worker for approval.
+
+## Experimental delegated listener
+
+`inbox_wait(connection, worker_id, wait_seconds)` is available to an explicitly
+authorized native background child of a bound Codex, Claude, Cursor or Copilot
+session. It observes the existing SSE inbox and returns routing metadata when
+eligible work arrives; the child still calls `inbox_claim` before execution.
+Only one wait may be outstanding per connection. It does not take the stream's
+acknowledgement signal, poll the network, send progress pings or return to the
+model while empty. Claims continue to protect work if native delivery races it.
+
+Codex's order is experimental native events, App Server, queue, the experimental
+delegated listener, hooks, durable inbox. A live waiter is reported as
+`delegated_listener.armed=true`, `host_lifetime_verified=false` and
+`readiness=experimental`; it does not set `idle_wake=true`. Verified native wake
+routes remain preferred. Waiting status is memory-only and clears on tool
+return, cancellation, deadline or broker shutdown. Durable requests and claims
+survive those events.
+
+The default wait is 15 minutes, maximum one hour per call. The parent supplies an
+overall listening deadline. The host's effective MCP timeout must exceed the
+selected wait; Codex's documented default is 60 seconds. An empty expiry or
+failure stops the child instead of creating a periodic model loop. Re-arming
+after successfully handling a mention is allowed within the authorized period.
+No host configuration is silently rewritten and no waiting subagent starts just
+because the user joins a room. The exact host/version still needs a live test
+with the parent finished, two delayed events, cancellation and app restart.
+
+The [persistent-listener skill reference](../skills/tincan-listen/references/persistent-listener.md)
+contains the parent and child instructions. Claude already has an event-driven
+idle-wake hook, so it generally needs no waiting child. Claude, Cursor and Copilot
+document background subagents, but persistent listener lifetime is a separate
+validation. Copilot CLI support is conditional on actual background and tool
+capabilities; its SDK adapter remains the dedicated option. OpenClaw and Hermes
+already run gateway services and per-event workers.
 
 ## Claude
 
