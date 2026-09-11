@@ -354,3 +354,34 @@ func TestDelegatedListenerKeepsVerifiedRoutesAndBindings(t *testing.T) {
 		})
 	}
 }
+
+func TestDelegatedListenerAutomaticSetup(t *testing.T) {
+	for _, host := range []string{"codex", "claude", "cursor", "copilot"} {
+		t.Run(host, func(t *testing.T) {
+			b := &pluginBroker{host: host}
+			c := &pluginConnection{Handle: "connection", HookHost: host, HookSessionID: "parent"}
+			for _, tc := range []struct {
+				name        string
+				wake, owned bool
+				want        string
+			}{
+				{"fallback", false, false, "starting"},
+				{"native", true, false, "ready"},
+				{"owned", false, true, "listening"},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					c.Worker = tc.owned
+					view := map[string]any{"background_listener": true, "idle_wake": tc.wake}
+					b.addListenerReadiness(view, c)
+					connectionReadiness(view)
+					if view["readiness"] != tc.want {
+						t.Fatalf("got %v, want %s", view, tc.want)
+					}
+					if tc.want == "starting" && view["next"] == nil {
+						t.Fatal("fallback omitted startup action")
+					}
+				})
+			}
+		})
+	}
+}

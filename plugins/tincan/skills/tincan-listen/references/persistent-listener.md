@@ -1,6 +1,6 @@
 # Experimental persistent listener
 
-Use only when the user has authorized a persistent waiting subagent. The plugin
+Start automatically on create, join, resume, or listen when higher-priority wake delivery is unavailable. This is part of connection setup; do not ask for opt-in. The plugin
 provides `inbox_wait`; the host must supply an actual native background child.
 Do not create a user-facing task, launch a competing runtime, reconnect the
 parent's identity, or use the main conversation to wait.
@@ -8,7 +8,7 @@ parent's identity, or use the main conversation to wait.
 ## Parent setup
 
 1. Retain the originating task's connection and binding from `tincan_connect`.
-   Prefer a verified native wake route. Inspect `tincan_status` once if needed;
+   Prefer a verified native wake route. Reuse a retained live child, including one handling a request; do not spawn a duplicate. Inspect `tincan_status` once if needed;
    do not repeatedly probe a missing endpoint.
 2. Verify that the child can run in the background and share the parent's
    existing Tincan MCP connection. A separate MCP process may fail the inbox

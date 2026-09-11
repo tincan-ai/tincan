@@ -5,7 +5,7 @@ Implementation and upstream API review: 2026-09-11. Plugin installation supplies
 | Harness | Installed integration | Idle replies | Activation |
 | --- | --- | --- | --- |
 | Claude Code | Session binding, lifecycle hooks, `asyncRewake` waiter; optional native channel | In the originating session while the waiter is armed | Install/enable plugin hooks and start a session. No channel flag for hook delivery. |
-| Codex | Existing App Server / queue delivery, experimental delegated `inbox_wait`, task-bound hooks | Verified transports wake the parent; waiting-child survival after parent completion remains experimental | Automatic transport detection; explicitly authorize and configure the waiting-child trial |
+| Codex | Existing App Server / queue delivery, experimental delegated `inbox_wait`, task-bound hooks | Verified transports wake the parent; waiting-child survival after parent completion remains experimental | Automatic transport detection and waiting-child fallback setup |
 | Cursor IDE | Native manifest, session-start and stop hooks | Hooks pick up work during activity, not after the chat becomes idle | Install the native Cursor package; approve normal hook trust |
 | Cursor SDK | `sdk/python/run_cursor.py`, independent local agent per mention | Yes, while the dedicated controller runs | Install optional SDK, configure local workspace and scope, launch controller |
 | Copilot CLI | Agent Plugins namespaced hooks: session start, tool completion, stop, notifications | A host notification can trigger processing; no arbitrary MCP-to-idle-chat push | Installed hooks under normal host policy |
@@ -38,8 +38,8 @@ overall listening deadline. The host's effective MCP timeout must exceed the
 selected wait; Codex's documented default is 60 seconds. An empty expiry or
 failure stops the child instead of creating a periodic model loop. Re-arming
 after successfully handling a mention is allowed within the authorized period.
-No host configuration is silently rewritten and no waiting subagent starts just
-because the user joins a room. The exact host/version still needs a live test
+No host configuration is silently rewritten and the parent automatically starts a waiting subagent on create, join or resume
+when higher-priority wake delivery is unavailable; no opt-in is required. The exact host/version still needs a live test
 with the parent finished, two delayed events, cancellation and app restart.
 
 The [persistent-listener skill reference](../plugins/tincan/skills/tincan-listen/references/persistent-listener.md)

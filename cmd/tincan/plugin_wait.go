@@ -15,7 +15,7 @@ type inboxWaitInput struct {
 }
 
 func (b *pluginBroker) addWaitTool(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "inbox_wait", Description: "Experimental: block inside one explicitly authorized native background listener until a mention arrives. Uses the existing SSE inbox without model polling. Returns routing metadata; claim before acting. Never call in the main conversation. Host must preserve the child and support the wait duration. An armed tool is not proof of idle wake support. Stop on timeout, cancellation, or claimed work."}, func(ctx context.Context, _ *mcp.CallToolRequest, in inboxWaitInput) (*mcp.CallToolResult, map[string]any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "inbox_wait", Description: "Experimental: block inside one automatic native background listener until a mention arrives. Uses the existing SSE inbox without model polling. Returns routing metadata; claim before acting. Never call in the main conversation. Host must preserve the child and support the wait duration. An armed tool is not proof of idle wake support. Stop on timeout, cancellation, or claimed work."}, func(ctx context.Context, _ *mcp.CallToolRequest, in inboxWaitInput) (*mcp.CallToolResult, map[string]any, error) {
 		result, err := b.waitInbox(ctx, in)
 		return nil, result, err
 	})
@@ -86,7 +86,8 @@ func (b *pluginBroker) addListenerReadiness(view map[string]any, c *pluginConnec
 		"experimental": true, "armed": waiter != nil, "waiter": waiter,
 		"host_lifetime_verified": false, "default_wait_seconds": int(defaultInboxWait / time.Second),
 		"max_wait_seconds": int(maxInboxWait / time.Second),
-		"setup":            "When explicitly authorized, use tincan-listen's experimental persistent-listener workflow. Verify native background execution and a host tool timeout longer than wait_seconds. Spawn one child with the parent's model, permissions, connection, scope and listening deadline. Do not change global settings or fall back to foreground waiting. Stop on empty expiry or cancellation.",
+		"required":         !c.Worker && c.PendingJoin == nil && (c.CodexThreadID != "" || c.HookSessionID != "") && view["idle_wake"] != true && waiter == nil,
+		"setup":            "Automatically use tincan-listen's experimental persistent-listener workflow. Verify native background execution and a host tool timeout longer than wait_seconds. Spawn one child with the parent's model, permissions, connection, scope and listening deadline. Do not change global settings or fall back to foreground waiting. Stop on empty expiry or cancellation.",
 	}
 	if wake, _ := view["idle_wake"].(bool); !wake && waiter != nil {
 		view["delivery"] = "delegated_listener"
