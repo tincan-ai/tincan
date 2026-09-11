@@ -196,3 +196,31 @@ func (b *pluginBroker) selectCodexTarget(ctx context.Context, c *pluginConnectio
 	}
 	return nil
 }
+
+// The standard MCP entry is shared by portable clients. Select Codex delivery
+// only when Codex is actually an ancestor, not from a shared task-ID variable.
+func launchedByCodex() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	pid := int32(os.Getppid())
+	for depth := 0; depth < 16 && pid > 1 && ctx.Err() == nil; depth++ {
+		p, err := process.NewProcessWithContext(ctx, pid)
+		if err != nil {
+			return false
+		}
+		exe, err := p.ExeWithContext(ctx)
+		if err == nil && isCodexExecutable(exe) {
+			return true
+		}
+		parent, err := p.PpidWithContext(ctx)
+		if err != nil || parent == pid {
+			return false
+		}
+		pid = parent
+	}
+	return false
+}
+func isCodexExecutable(exe string) bool {
+	name := strings.TrimSuffix(strings.ToLower(filepath.Base(exe)), ".exe")
+	return name == "codex" || name == "codex-app-server"
+}

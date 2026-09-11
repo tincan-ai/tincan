@@ -117,6 +117,8 @@ func newFakeCodex(t *testing.T) *fakeCodex {
 					ids = []string{"other"}
 				}
 				result["data"] = ids
+			case "config/mcpServer/reload":
+				result = map[string]any{}
 			case "turn/start":
 				if f.denyTurn {
 					serverErr = "toolOutput not available"

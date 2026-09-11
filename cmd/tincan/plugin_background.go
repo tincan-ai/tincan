@@ -229,7 +229,9 @@ func (b *pluginBroker) status(handle string) (map[string]any, error) {
 	if self.Presence == "" {
 		self.Presence = "unknown"
 	}
-	return map[string]any{"connection": handle, "agent_id": c.AgentID, "name": c.Name, "paired": len(peers) > 0, "peers": peers, "presence": self.Presence, "last_seen_at": self.LastSeenAt, "presence_expires_at": self.PresenceExpiresAt, "presence_error": presenceError, "background_listener": running, "delivery": delivery, "idle_wake": d.IdleWake, "delivery_diagnostics": d, "delivery_priority": b.deliveryPriorities(), "execution": execution, "stream_state": streamState, "stream_error": streamError}, nil
+	view := map[string]any{"connection": handle, "agent_id": c.AgentID, "name": c.Name, "paired": len(peers) > 0, "peers": peers, "presence": self.Presence, "last_seen_at": self.LastSeenAt, "presence_expires_at": self.PresenceExpiresAt, "presence_error": presenceError, "background_listener": running, "delivery": delivery, "idle_wake": d.IdleWake, "delivery_diagnostics": d, "delivery_priority": b.deliveryPriorities(), "execution": execution, "stream_state": streamState, "stream_error": streamError}
+	connectionReadiness(view)
+	return view, nil
 }
 
 func (t *channelTransport) notifyPlugin(ctx context.Context, payload map[string]any) error {

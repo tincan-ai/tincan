@@ -30,6 +30,8 @@ def build(root, output, go, server, version, targets, marketplace=None):
             path = plugin / manifest_name
             manifest = json.loads(path.read_text())
             manifest['version'] = version
+            if manifest_name == '.codex-plugin/plugin.json' and 'mcpServers' in manifest:
+                raise ValueError('Codex must use portable mcp.json; an inline MCP override breaks installed path resolution')
             write_json(path, manifest)
         binaries = {}
         for target in targets:

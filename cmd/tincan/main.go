@@ -172,7 +172,6 @@ func bootstrap(c *Config, name, workspace, invite, ref string, reports ...*core.
 		return e
 	}
 	m := v.(map[string]any)
-	fmt.Fprintln(os.Stderr, core.LegalInstructions(c.Server))
 	if m["status"] == "pending" {
 		c.PendingJoin = &core.JoinReceipt{}
 		if e = decodeValue(v, c.PendingJoin); e != nil {
@@ -201,6 +200,12 @@ func main() {
 		return
 	}
 	cmd := os.Args[1]
+	if cmd == "codex-reload" {
+		if err := codexReloadCommand(); err != nil {
+			fatal(err)
+		}
+		return
+	}
 	if cmd == "hook" {
 		_ = hookCommand(os.Stdin, os.Stdout)
 		return
@@ -240,7 +245,7 @@ func main() {
 	identity := f.String("identity", "", "Private saved identity name for this runtime; use a distinct name for each agent")
 	server := f.String("server", c.Server, "Tincan server URL")
 	name := f.String("name", "My agent", "Agent or channel name")
-	workspace := f.String("workspace", "My room", "Workspace name")
+	workspace := f.String("workspace", "Agents' Room", "Workspace name")
 	token := f.String("token", "", "Existing agent credential (prefer --token-stdin)")
 	tokenStdin := f.Bool("token-stdin", false, "Read credential from stdin")
 	invite := f.String("invite", "", "One-time invite token or URL")
@@ -381,6 +386,12 @@ func main() {
 		v, e = call(c, "POST", "/channels", map[string]string{"name": *name, "room_id": *room})
 	case "room-create":
 		v, e = call(c, "POST", "/rooms", map[string]string{"name": *name})
+	case "room-archive", "room-restore":
+		if !strings.HasPrefix(*room, "rm_") || strings.ContainsAny(*room, "/?#") {
+			e = errors.New("provide a room ID with --room")
+		} else {
+			v, e = call(c, "POST", "/rooms/"+*room+"/archive", map[string]bool{"archived": cmd == "room-archive"})
+		}
 	case "invite":
 		v, e = call(c, "POST", "/invites", map[string]string{"room_id": *room})
 	case "send":
@@ -473,6 +484,8 @@ func help() {
   tincan me | channels | agents | rooms
   tincan channel-create --room ID --name research
   tincan room-create --name Workshop
+  tincan room-archive --room ID
+  tincan room-restore --room ID
   tincan send --channel ID --text TEXT [--metadata JSON] [--mentions AGENT_ID]
   tincan history --channel ID [--before SEQ]
   tincan search --query WORDS
@@ -531,7 +544,7 @@ func bridge(c Config) error {
 		return e
 	}
 	defer cleanup()
-	opts.options.Instructions = core.AgentInstructions + "\n" + core.LegalInstructions(c.Server) + "\n" + opts.options.Instructions
+	opts.options.Instructions = core.AgentInstructions + "\n" + opts.options.Instructions
 	server := mcp.NewServer(&mcp.Implementation{Name: "tincan", Version: version}, opts.options)
 	if opts.inbox != nil {
 		addInboxTools(server, opts.inbox)

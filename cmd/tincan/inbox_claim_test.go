@@ -97,44 +97,63 @@ func TestOneDelegatedWorkerOwnsRequest(t *testing.T) {
 }
 
 func TestDelegatedMCPClaimAndReply(t *testing.T) {
-	c, replies := fixture(t, []inboxEvent{event(42, "peer", "self")})
-	i, err := openInbox(c, "peer")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer i.close()
-	if _, err = i.next(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	server := mcp.NewServer(&mcp.Implementation{Name: "claims", Version: "1"}, nil)
-	addInboxTools(server, i)
-	a, b := mcp.NewInMemoryTransports()
-	ss, err := server.Connect(context.Background(), a, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ss.Close()
-	cs, err := mcp.NewClient(&mcp.Implementation{Name: "child", Version: "1"}, nil).Connect(context.Background(), b, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cs.Close()
-	r, err := cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_claim", Arguments: map[string]any{"seq": 42, "worker_id": "child"}})
-	if err != nil || r.IsError {
-		t.Fatal(r, err)
-	}
-	var claimed claimResult
-	data, _ := json.Marshal(r.StructuredContent)
-	if json.Unmarshal(data, &claimed) != nil || !claimed.Acquired {
-		t.Fatal(string(data))
-	}
-	r, err = cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_reply", Arguments: map[string]any{"seq": 42, "text": "done"}})
-	if err != nil || !r.IsError || len(*replies) != 0 {
-		t.Fatal("unclaimed completion succeeded", r, err)
-	}
-	r, err = cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_reply", Arguments: map[string]any{"seq": 42, "text": "done", "claim": claimed.Claim}})
-	if err != nil || r.IsError || len(*replies) != 1 || i.state.Pending != nil {
-		t.Fatal(r, err)
+	for _, metadata := range []string{`{}`, `{"nested":{"enabled":true},"values":[1,"two"],"empty":{}}`, `null`, `[]`} {
+		t.Run(metadata, func(t *testing.T) {
+			e := event(42, "peer", "self")
+			e.Payload.Metadata = json.RawMessage(metadata)
+			c, replies := fixture(t, []inboxEvent{e})
+			i, err := openInbox(c, "peer")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer i.close()
+			if _, err = i.next(context.Background()); err != nil {
+				t.Fatal(err)
+			}
+			server := mcp.NewServer(&mcp.Implementation{Name: "claims", Version: "1"}, nil)
+			addInboxTools(server, i)
+			a, b := mcp.NewInMemoryTransports()
+			ss, err := server.Connect(context.Background(), a, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer ss.Close()
+			cs, err := mcp.NewClient(&mcp.Implementation{Name: "child", Version: "1"}, nil).Connect(context.Background(), b, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer cs.Close()
+			r, err := cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_claim", Arguments: map[string]any{"seq": 42, "worker_id": "child"}})
+			if err != nil || r.IsError {
+				t.Fatal(r, err)
+			}
+			var claimed claimResult
+			data, _ := json.Marshal(r.StructuredContent)
+			if json.Unmarshal(data, &claimed) != nil || !claimed.Acquired {
+				t.Fatal(string(data))
+			}
+			// A response lost after persistence is recoverable by the SAME worker.
+			retry, retryErr := cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_claim", Arguments: map[string]any{"seq": 42, "worker_id": "child"}})
+			if retryErr != nil || retry.IsError {
+				t.Fatal(retry, retryErr)
+			}
+			var recovered claimResult
+			retryData, _ := json.Marshal(retry.StructuredContent)
+			if json.Unmarshal(retryData, &recovered) != nil || recovered.Claim != claimed.Claim || recovered.Claim == "" {
+				t.Fatal("claim retry lost ownership")
+			}
+			if string(recovered.Event.Payload.Metadata) != string(claimed.Event.Payload.Metadata) {
+				t.Fatal("metadata changed on retry")
+			}
+			r, err = cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_reply", Arguments: map[string]any{"seq": 42, "text": "done"}})
+			if err != nil || !r.IsError || len(*replies) != 0 {
+				t.Fatal("unclaimed completion succeeded", r, err)
+			}
+			r, err = cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "inbox_reply", Arguments: map[string]any{"seq": 42, "text": "done", "claim": claimed.Claim}})
+			if err != nil || r.IsError || len(*replies) != 1 || i.state.Pending != nil {
+				t.Fatal(r, err)
+			}
+		})
 	}
 }
 

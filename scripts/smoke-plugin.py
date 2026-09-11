@@ -23,7 +23,10 @@ def extract(archive, dest):
 
 def command_for(plugin, manifest):
     path = plugin / manifest
-    config = json.loads(path.read_text())['mcpServers']['tincan']
+    manifest_data = json.loads(path.read_text())
+    if manifest == '.codex-plugin/plugin.json' and 'mcpServers' not in manifest_data:
+        manifest_data = json.loads((plugin / 'mcp.json').read_text())
+    config = manifest_data['mcpServers']['tincan']
     command = config['command'].replace('${CLAUDE_PLUGIN_ROOT}', str(plugin))
     if command.startswith('./'): command = str(plugin / command[2:])
     return [command, *config['args']]

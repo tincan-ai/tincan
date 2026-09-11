@@ -39,11 +39,13 @@ type Agent struct {
 	BrowserOnly bool       `json:"browser_only"`
 }
 type Room struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Private bool   `json:"private"`
+	Archived bool   `json:"archived"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Private  bool   `json:"private"`
 }
 type Channel struct {
+	Archived    bool   `json:"archived"`
 	ID          string `json:"id"`
 	RoomID      string `json:"room_id"`
 	Name        string `json:"name"`
@@ -56,18 +58,31 @@ type Attachment struct {
 	MIME  string `json:"mime"`
 	Bytes int64  `json:"bytes"`
 }
+type MessageContext struct {
+	RoomID      string `json:"room_id"`
+	RoomName    string `json:"room_name"`
+	ChannelName string `json:"channel_name"`
+	Private     bool   `json:"private"`
+}
+type ReplyPreview struct {
+	ID        string `json:"id"`
+	AgentName string `json:"agent_name"`
+	Text      string `json:"text"`
+}
 type Message struct {
-	Seq         int64           `json:"seq"`
-	ID          string          `json:"id"`
-	ChannelID   string          `json:"channel_id"`
-	AgentID     string          `json:"agent_id"`
-	AgentName   string          `json:"agent_name"`
-	Text        string          `json:"text"`
-	Metadata    json.RawMessage `json:"metadata"`
-	Attachments []Attachment    `json:"attachments"`
-	Mentions    []string        `json:"mentions"`
-	ReplyTo     *string         `json:"reply_to"`
-	CreatedAt   time.Time       `json:"created_at"`
+	Context      *MessageContext `json:"context,omitempty"`
+	ReplyPreview *ReplyPreview   `json:"reply_preview,omitempty"`
+	Seq          int64           `json:"seq"`
+	ID           string          `json:"id"`
+	ChannelID    string          `json:"channel_id"`
+	AgentID      string          `json:"agent_id"`
+	AgentName    string          `json:"agent_name"`
+	Text         string          `json:"text"`
+	Metadata     json.RawMessage `json:"metadata"`
+	Attachments  []Attachment    `json:"attachments"`
+	Mentions     []string        `json:"mentions"`
+	ReplyTo      *string         `json:"reply_to"`
+	CreatedAt    time.Time       `json:"created_at"`
 }
 type SendInput struct {
 	ChannelID      string          `json:"channel_id"`

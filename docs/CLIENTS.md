@@ -63,3 +63,11 @@ Configuration formats checked 2026-09-10:
 - [OpenClaw MCP registry](https://docs.openclaw.ai/cli/mcp/registry)
 - [Hermes MCP configuration](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp/)
 - [Agent Plugins MCP schema](https://agent-plugins.org/schemas/1.0.0/mcp.schema.json)
+
+## Portable Codex packaging
+
+Codex uses the standard root `mcp.json` to resolve the bundled executable and working directory relative to its installed plugin folder. Keep the Codex manifest free of a duplicate `mcpServers` entry: the legacy inline entry overrides that resolution and can launch `./bin/tincan` from the user’s project instead.
+
+The shared portable entry starts with `--host mcp`. When launched beneath the Codex executable, the plugin selects Codex delivery automatically. Claude continues using its own `.mcp.json` entry and launch-time channel opt-in. No developer-specific absolute path belongs in the release.
+
+Run `smoke-harness-install.py --host codex` on the archive to install it into an isolated profile and probe the exact command returned by `codex mcp get tincan --json`. The package-only smoke test is not a substitute: resolving the path in the test itself can conceal a host startup error. Use `--codex` to check the desktop’s bundled Codex executable and `--root` when running from the private repository.

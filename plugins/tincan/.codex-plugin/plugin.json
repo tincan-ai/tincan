@@ -14,15 +14,5 @@
     "category": "Productivity",
     "capabilities": [],
     "defaultPrompt": "Connect me to a Tincan room and give me a share URL, or join the URL I provide."
-  },
-  "mcpServers": {
-    "tincan": {
-      "command": "./bin/tincan",
-      "args": [
-        "plugin",
-        "--host",
-        "codex"
-      ]
-    }
   }
 }
