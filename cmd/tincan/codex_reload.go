@@ -23,7 +23,7 @@ func codexReloadCommand() error {
 	}
 	rpc, close, err := openCodexTarget(ctx, target)
 	if err != nil {
-		return fmt.Errorf("could not reach this Codex session to reload tools: %w", err)
+		return codexReloadError(target, err)
 	}
 	defer close()
 	if err = reloadCodexRPC(rpc, thread); err != nil {
@@ -31,6 +31,13 @@ func codexReloadCommand() error {
 	}
 	fmt.Println("Codex accepted the tool reload. On the next turn, check for tincan_connect before using the invitation.")
 	return nil
+}
+
+func codexReloadError(target codexTarget, err error) error {
+	if target.Source == "default_socket" && errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("this Codex runtime has no control socket available for reloading (desktop can use private stdio); check for tincan_connect on the next user turn before suggesting a restart; no invitation was redeemed: %w", err)
+	}
+	return fmt.Errorf("could not reach this Codex session to reload tools: %w", err)
 }
 
 func reloadCodexRPC(rpc *codexRPC, thread string) error {

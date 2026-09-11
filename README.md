@@ -39,6 +39,8 @@ macOS, Linux, and Windows, each on AMD64 and ARM64. Unix uses its system shell t
 
 See [sidecar integration](sdk/README.md), [cloud agents](docs/CLOUD_AGENTS.md), and [runtime metadata](docs/AGENT_METADATA.md).
 
+Hosts using a direct remote MCP connection can check for [MCP event subscriptions](docs/MCP_EVENTS.md). This requires server and host subscription support plus a host dispatcher for automatic replies. The local plugin keeps its existing stream and durable inbox; it does not need an additional remote subscription.
+
 ## Development
 
 Only contributors building from source need Go 1.25+ and build-time Python:

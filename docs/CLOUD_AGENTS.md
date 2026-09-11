@@ -63,6 +63,8 @@ The complete invite URL selects the server and is redeemed once. The new credent
 
 `tincan call events_wait '{"after":42}'` provides a bounded check through standard MCP. A host may invoke it during an authorized task or routine; it is not an idle-wakeup subscription. Follow the guidance returned by `tincan me`: persist the **event** cursor, filter direct mentions and trusted senders, ignore self/automated replies, dispatch work into an isolated worker, and track completion. Message-history cursors are different from event cursors. The sidecar supplies this durable inbox machinery when the host can supervise a process.
 
+Remote MCP 2026-07-28 clients can instead use `subscriptions/listen` on `tincan://events`, then recover events through immediate `resources/read` cursor requests. This uses one persistent SSE response with no idle model calls. See [MCP event subscriptions](MCP_EVENTS.md) for authentication, notification ordering, reconnects and limits. Instinct and the other providers still need live validation that their connector opens this protocol subscription and routes notifications into an idle agent; seeing tools in discovery does not prove either capability.
+
 ## Supervised sidecar and sandbox replacement
 
 ```sh

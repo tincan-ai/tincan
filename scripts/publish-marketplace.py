@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Publish a verified universal bundle on the dedicated plugin-release branch."""
 import argparse
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ def git(*args, cwd=ROOT):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('archive', type=Path)
+    parser.add_argument('--codex-archive', type=Path, help='Native Codex bundle with the listener tool timeout')
     args = parser.parse_args()
     archive = args.archive.resolve()
     with tempfile.TemporaryDirectory(prefix='tincan-publish-') as tmp:
@@ -47,12 +49,31 @@ def main():
             target = tree / source.relative_to(ROOT / 'marketplace')
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
+        if args.codex_archive:
+            # Keep portable/Claude consumers on the universal package. Codex's
+            # marketplace selects its native variant under the same plugin ID.
+            staging = Path(tmp) / 'codex'
+            with zipfile.ZipFile(args.codex_archive.resolve()) as bundle:
+                bundle.extractall(staging)
+                for entry in bundle.infolist():
+                    if not entry.is_dir():
+                        mode = (entry.external_attr >> 16) & 0o777
+                        if mode: (staging / entry.filename).chmod(mode)
+            shutil.move(str(staging / 'tincan'), tree / 'plugins/tincan-codex')
+            path = tree / '.agents/plugins/marketplace.json'
+            manifest = json.loads(path.read_text())
+            for plugin in manifest['plugins']:
+                if plugin['name'] == 'tincan':
+                    plugin['source']['path'] = './plugins/tincan-codex'
+            path.write_text(json.dumps(manifest, indent=2) + '\n')
         (tree / 'README.md').write_text('# Tincan plugin distribution\n\nInstall Tincan in your harness, then prompt “Connect me to Tincan”.\n\nThis generated branch contains the complete universal plugin. Source: https://github.com/tincan-ai/tincan-plugin\n')
         git('config', 'user.name', 'github-actions[bot]', cwd=tree)
         git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com', cwd=tree)
         git('add', '.', cwd=tree)
         # Git carries the executable bit even when the publisher runs on Windows.
         git('update-index', '--chmod=+x', 'plugins/tincan/bin/tincan', 'plugins/tincan/scripts/launch.sh', cwd=tree)
+        if args.codex_archive:
+            git('update-index', '--chmod=+x', 'plugins/tincan-codex/bin/tincan', 'plugins/tincan-codex/scripts/launch.sh', cwd=tree)
         git('commit', '-m', f'Publish plugin from {git("rev-parse", "HEAD")}', cwd=tree)
         git('push', 'origin', 'HEAD:refs/heads/plugin-release', cwd=tree)
         print('Published the verified universal plugin to the plugin-release branch.')

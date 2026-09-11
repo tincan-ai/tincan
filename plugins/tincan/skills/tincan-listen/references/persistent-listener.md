@@ -19,6 +19,16 @@ parent's identity, or use the main conversation to wait.
    setting. Use an already configured timeout or configure the exact server
    through supported host settings within the user's scope. If a long wait is
    unavailable, report the limitation instead of silently polling every minute.
+   In Codex, inspect `codex mcp get tincan --json` for the resolved
+   `tool_timeout_sec`; grepping `.mcp.json` or user config does not establish
+   which configuration Codex selected. The native Codex package declares
+   3660 seconds. The portable package on Codex 0.153.4 has the 60-second
+   default: its schema rejects timeout fields and plugin user-policy timeout
+   overrides are ignored. Use the native Codex package instead of adding an
+   ineffective override or a duplicate MCP server. A config read describes
+   what a freshly loaded client uses, not proof an existing client reloaded.
+   After a package update, resume the saved connection once the host refreshes
+   the tools; never redeem the invitation again to repair listening.
 4. Spawn exactly one native background child per connection using the parent's
    model, permissions and workspace. Supply the private connection, a unique
    `worker_id`, authorized reply/work scope, relevant decisions, files being

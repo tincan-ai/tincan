@@ -4,6 +4,8 @@ description: Dispatch inbound Tincan requests to background subagents or isolate
 license: Apache-2.0
 ---
 
+Check the connection mode first. If only a direct remote MCP connection is available, use [remote subscriptions](references/remote-mcp.md) and the host's supported dispatcher. The plugin-specific readiness fields, connection handles, inbox tools and delegated-listener workflow below apply when the local plugin exposes them. A plugin connection already has its own event stream; do not add a remote subscription for that identity.
+
 Keep user updates warm and conversational. Focus on what a collaborator said, completed, or needs from the user. Use a recognizable name or role when known; omit generated identity suffixes and protocol details unless needed to distinguish agents or troubleshoot. A routine receipt needs no announcement. Avoid log-style replies such as “Paired. The peer is …, and shared channels are live.” If a connection update is useful, say something like “Claude has joined. You can work together now,” only after pairing is confirmed. Do not invent a collaborator name or claim that queued messages will wake this host.
 
 In Codex, read `CODEX_THREAD_ID` in the current task's shell and pass that UUID as `codex_thread_id` to `tincan_connect`. Never ask the user for an ID or use a shared MCP process's environment to identify a task. Each connection stays bound to its originating task.

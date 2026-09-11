@@ -57,8 +57,23 @@ def build(root, output, go, server, version, targets, marketplace=None, harness=
             subprocess.run([go, 'build', '-trimpath', '-ldflags=-s -w',
                             '-o', str(plugin / 'bin/tincan.exe'), './cmd/tincan-launcher'], cwd=root,
                            env=dict(os.environ, GOOS='windows', GOARCH='386', CGO_ENABLED='0'), check=True)
-        if harness == 'cursor':
-            (plugin / 'plugin.json').unlink()  # Force native Cursor hooks, not portable MCP-only detection.
+        if harness in ('cursor', 'codex'):
+            (plugin / 'plugin.json').unlink()  # Select the harness's native manifest.
+        if harness == 'codex':
+            # Codex 0.153.4's portable MCP schema rejects timeout fields and
+            # plugin user-policy overrides do not apply them. Native MCP config
+            # supports the timeout. Its explicit cwd resolves to the installed
+            # root; legacy config does not expand CLAUDE_PLUGIN_ROOT in commands.
+            manifest_path = plugin / '.codex-plugin/plugin.json'
+            manifest = json.loads(manifest_path.read_text())
+            manifest['mcpServers'] = './.codex-plugin/mcp.json'
+            write_json(manifest_path, manifest)
+            write_json(plugin / '.codex-plugin/mcp.json', {'mcpServers': {'tincan': {
+                'command': './bin/tincan',
+                'args': ['plugin', '--host', 'codex'],
+                'cwd': '.',
+                'tool_timeout_sec': 3660,
+            }}})
         yaml_manifest = plugin / 'plugin.yaml'
         yaml_manifest.write_text(re.sub(r'^version: .*$', 'version: ' + version, yaml_manifest.read_text(), flags=re.M))
         shutil.copy2(root / 'LICENSE', plugin / 'LICENSE')
@@ -78,7 +93,7 @@ def build(root, output, go, server, version, targets, marketplace=None, harness=
         # Hash every shipped executable/launcher, including the Windows dispatcher.
         files = {p.relative_to(plugin).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                  for p in sorted(plugin.rglob('*')) if p.is_file()}
-        write_json(plugin / 'release.json', {'version': version, 'server': server,
+        write_json(plugin / 'release.json', {'version': version, 'server': server, 'harness': harness or 'portable',
                    'targets': binaries, 'files': files, 'protocol': 'tincan/1', 'cgo': False})
         filename = 'tincan-plugin.zip' if targets == TARGETS else f'tincan-{targets[0]}.zip'
         if harness:
@@ -113,7 +128,7 @@ def main():
     parser.add_argument('--server', default=os.environ.get('TINCAN_RELEASE_SERVER', 'https://app.gotincan.com'))
     parser.add_argument('--version')
     parser.add_argument('--target', choices=TARGETS, help='Optional single-platform developer package')
-    parser.add_argument('--harness', choices=['cursor'], help='Native Cursor package with hooks instead of portable MCP-only detection')
+    parser.add_argument('--harness', choices=['cursor', 'codex'], help='Native harness package (Cursor hooks or Codex listener timeout)')
     parser.add_argument('--marketplace', type=Path, help='Write the complete marketplace tree for Git distribution')
     args = parser.parse_args()
     if not args.server:

@@ -35,7 +35,11 @@ survive those events.
 
 The default wait is 15 minutes, maximum one hour per call. The parent supplies an
 overall listening deadline. The host's effective MCP timeout must exceed the
-selected wait; Codex's documented default is 60 seconds. An empty expiry or
+selected wait; Codex's documented default is 60 seconds. The native Codex
+package declares 3660 seconds; verify it with `codex mcp get tincan --json`.
+The portable format on Codex 0.153.4 cannot set that timeout, including through
+plugin user-policy overrides. Update to the native package and resume the
+saved connection after the host refreshes tools. An empty expiry or
 failure stops the child instead of creating a periodic model loop. Re-arming
 after successfully handling a mention is allowed within the authorized period.
 No host configuration is silently rewritten and the parent automatically starts a waiting subagent on create, join or resume

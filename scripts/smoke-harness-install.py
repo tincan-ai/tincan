@@ -61,13 +61,22 @@ def main():
             resolved = subprocess.run([args.codex, 'mcp', 'get', 'tincan', '--json'],
                                       env=env, cwd=root, capture_output=True, text=True, timeout=15)
             assert resolved.returncode == 0, resolved.stderr
-            transport = json.loads(resolved.stdout)['transport']
+            config = json.loads(resolved.stdout)
+            transport = config['transport']
+            release = json.loads((installed / 'release.json').read_text())
+            if release.get('harness') == 'codex':
+                assert config.get('tool_timeout_sec', 0) > 3600, config
+                assert transport['args'] == ['plugin', '--host', 'codex'], transport
+                assert Path(transport['cwd']) == installed, transport
+                assert (Path(transport['cwd']) / transport['command']).parent == installed / 'bin', transport
             runtime_env.update(transport.get('env') or {})
             smoke.probe([transport['command'], *transport.get('args', [])],
                         runtime_env, Path(transport.get('cwd') or root), driver)
         else:
             smoke.probe(smoke.command_for(installed, manifest), runtime_env, root, driver)
-        print(f'{args.host}: installed through plugin manager and started installed MCP server successfully; no model calls or user profile changes.')
+        print(f'{args.host}: installed through plugin manager and started installed MCP server successfully; '
+              + (f'effective tool timeout: {config.get("tool_timeout_sec")} seconds; ' if args.host == 'codex' else '')
+              + 'no model calls or user profile changes.')
 
 
 if __name__ == '__main__': main()

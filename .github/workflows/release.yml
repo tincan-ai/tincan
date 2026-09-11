@@ -35,9 +35,11 @@ jobs:
             test -n "$RELEASE_SERVER" || { echo 'Set TINCAN_RELEASE_SERVER to the live HTTPS service origin before releasing.'; exit 1; }
             python3 scripts/package-plugin.py --server "$RELEASE_SERVER" --version "${RELEASE_TAG#v}"
             python3 scripts/package-plugin.py --server "$RELEASE_SERVER" --version "${RELEASE_TAG#v}" --harness cursor
+            python3 scripts/package-plugin.py --server "$RELEASE_SERVER" --version "${RELEASE_TAG#v}" --harness codex
           else
             python3 scripts/package-plugin.py --server https://tincan.invalid
             python3 scripts/package-plugin.py --server https://tincan.invalid --harness cursor
+            python3 scripts/package-plugin.py --server https://tincan.invalid --harness codex
           fi
       - uses: actions/upload-artifact@v4
         with:
@@ -98,10 +100,14 @@ jobs:
           path: dist/releases
       - name: Verify actual Codex installation and tool discovery
         if: runner.os != 'Windows'
-        run: python scripts/smoke-harness-install.py dist/releases/tincan-plugin.zip --host codex
+        run: |
+          python scripts/smoke-harness-install.py dist/releases/tincan-plugin.zip --host codex
+          python scripts/smoke-harness-install.py dist/releases/tincan-codex-plugin.zip --host codex
       - name: Verify Codex installation with native Windows process resolution
         if: runner.os == 'Windows'
-        run: python scripts/smoke-harness-install.py dist/releases/tincan-plugin.zip --host codex --node-driver (Get-Command node).Source
+        run: |
+          python scripts/smoke-harness-install.py dist/releases/tincan-plugin.zip --host codex --node-driver (Get-Command node).Source
+          python scripts/smoke-harness-install.py dist/releases/tincan-codex-plugin.zip --host codex --node-driver (Get-Command node).Source
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [smoke, codex-install]
@@ -122,7 +128,7 @@ jobs:
         with:
           name: universal-plugin
           path: dist/releases
-      - run: python3 scripts/publish-marketplace.py dist/releases/tincan-plugin.zip
+      - run: python3 scripts/publish-marketplace.py dist/releases/tincan-plugin.zip --codex-archive dist/releases/tincan-codex-plugin.zip
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/releases/*
