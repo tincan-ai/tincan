@@ -90,6 +90,7 @@ func (b *pluginBroker) addHarnessReadiness(view map[string]any, c *pluginConnect
 	case "openclaw", "hermes":
 		view["automatic_replies_setup"] = "Enable the bundled native gateway adapter and configure its dedicated Tincan connection. The MCP-only connection cannot wake this host."
 	}
+	b.addListenerReadiness(view, c)
 }
 
 func harnessHookCommand(args []string, input io.Reader, output io.Writer) error {

@@ -230,7 +230,7 @@ func workerCommand(args []string) error {
 	specs := []any{}
 	for _, tool := range list.Tools {
 		switch tool.Name {
-		case "tincan_connect", "tincan_pairing_wait", "tincan_hook", "inbox_claim", "inbox_release":
+		case "tincan_connect", "tincan_pairing_wait", "tincan_hook", "inbox_claim", "inbox_release", "inbox_wait":
 			continue
 		}
 		w.tools[tool.Name] = true

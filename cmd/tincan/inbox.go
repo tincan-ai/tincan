@@ -44,6 +44,9 @@ type inbox struct {
 	path           string
 	state          inboxState
 	changed        chan struct{}
+	updates        chan struct{}
+	waiter         *inboxWaiter
+	closed         bool
 	lock           *os.File
 }
 
@@ -106,7 +109,17 @@ func openInboxAt(c Config, senders, identityPath string, workspacePeers bool) (*
 	}
 	return i, nil
 }
-func (i *inbox) close() { unlockInbox(i.lock) }
+func (i *inbox) close() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if !i.closed {
+		i.closed = true
+		i.signalUpdate()
+		if i.lock != nil {
+			unlockInbox(i.lock)
+		}
+	}
+}
 func (i *inbox) save(s inboxState) error {
 	b, err := json.Marshal(s)
 	if err != nil {
@@ -131,6 +144,7 @@ func (i *inbox) save(s inboxState) error {
 		return err
 	}
 	i.state = s
+	i.signalUpdate()
 	return nil
 }
 func (i *inbox) accepts(e inboxEvent) bool {

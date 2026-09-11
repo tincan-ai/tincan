@@ -259,10 +259,16 @@ func (b *pluginBroker) deliveryPriorities() []string {
 		return []string{"owned_codex_worker", "durable_inbox"}
 	}
 	if b.native {
-		return []string{"claude_channel", "durable_inbox"}
+		return []string{"claude_async_rewake", "claude_channel", "delegated_listener", "hooks", "durable_inbox"}
 	}
 	if b.notify != nil {
 		return []string{"host_callback", "durable_inbox"}
+	}
+	if b.host == "claude" {
+		return []string{"claude_async_rewake", "delegated_listener", "hooks", "durable_inbox"}
+	}
+	if b.host == "cursor" || b.host == "copilot" {
+		return []string{"delegated_listener", "hooks", "durable_inbox"}
 	}
 	return []string{"durable_inbox"}
 }

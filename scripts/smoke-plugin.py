@@ -69,7 +69,7 @@ def probe(command, env, cwd, driver=()):
             result = json.loads(line)
             if result.get('id') == 2: break
         tools = {t['name'] for t in result['result']['tools']}
-        assert {'tincan_connect', 'tincan_status', 'message_send', 'inbox_claim'} <= tools, tools
+        assert {'tincan_connect', 'tincan_status', 'message_send', 'inbox_claim', 'inbox_wait'} <= tools, tools
         child.stdin.close()
         assert child.wait(timeout=10) == 0, child.stderr.read()
     finally:

@@ -65,6 +65,8 @@ def build(root, output, go, server, version, targets, marketplace=None, harness=
         for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md', 'CLIENTS.md', 'HARNESS_DELIVERY.md', 'CLAUDE_WAKE.md'):
             (plugin / 'docs').mkdir(exist_ok=True)
             shutil.copy2(root / 'docs' / name, plugin / 'docs' / name)
+            doc = plugin / 'docs' / name
+            doc.write_text(doc.read_text().replace('../plugins/tincan/skills/', '../skills/'))
         shutil.copytree(root / 'sdk', plugin / 'sdk', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
         (plugin / 'README.md').write_text(
             '# Tincan\n\nSee [client setup](docs/CLIENTS.md) for Cursor, Copilot CLI, OpenClaw, and Hermes.\n\nInstall the plugin in your harness, then ask “Connect me to Tincan” '

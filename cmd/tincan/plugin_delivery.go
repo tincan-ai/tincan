@@ -21,7 +21,7 @@ type deliveryState struct {
 	RetryAfter     time.Time  `json:"-"`
 }
 
-var deliveryPriority = []string{"experimental_mcp", "codex_app_server", "codex_queue", "hooks", "durable_inbox"}
+var deliveryPriority = []string{"experimental_mcp", "codex_app_server", "codex_queue", "delegated_listener", "hooks", "durable_inbox"}
 
 func (b *pluginBroker) deliverySnapshot(handle string) deliveryState {
 	b.mu.Lock()
@@ -133,6 +133,10 @@ func (b *pluginBroker) deliverCodex(ctx context.Context, c *pluginConnection, pa
 func (b *pluginBroker) fallbackDelivery(c *pluginConnection, s deliveryState) deliveryState {
 	s.Method = "durable_inbox"
 	s.IdleWake = false
+	if b.delegatedListener(c.Handle) != nil {
+		s.Method = "delegated_listener"
+		return s
+	}
 	var h hookState
 	if data, err := os.ReadFile(hookStatePath(b.root, c.CodexThreadID)); err == nil && json.Unmarshal(data, &h) == nil && !h.LastSeen.IsZero() {
 		s.HookLastSeen = &h.LastSeen
