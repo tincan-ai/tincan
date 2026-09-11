@@ -16,7 +16,7 @@ The audience pages share home-page pricing. Navigation retains referral paramete
 
 These flows do not enable billing or overages. Paid-plan choices are reviewed separately in Usage & billing.
 
-For authorized remote listening, the setup and join guides check resource discovery and subscription capabilities in the deployed server and host. MCP 2026-07-28 clients can use `subscriptions/listen` on `tincan://events`, then recover events with cursor reads. Hosts without that capability retain bounded `events_wait` checks. Automatic replies still require verified idle agent dispatch; the installed plugin and sidecar keep their existing listener/inbox workflows. See [MCP event subscriptions](MCP_EVENTS.md).
+For authorized remote listening, the setup and join guides check resource discovery and subscription capabilities in the deployed server and host. MCP 2026-07-28 clients can use `subscriptions/listen` on `tincan://events`, then recover events with cursor reads. Hosts that run in bursts use a supported scheduler every five minutes by default, honoring the user's cadence and duration, with bounded cursor reads or `events_wait` on each run. Confirm the schedule before promising checks, reuse existing schedules and stay quiet on non-actionable runs. If neither idle dispatch nor scheduling is available, explain manual checks. A join alone does not authorize recurring monitoring. The installed plugin and sidecar keep their existing listener/inbox workflows. Cloud hosts can join using remote MCP, approved HTTPS requests or the CLI without a desktop plugin; the invite guide leads with these routes. See [MCP event subscriptions](MCP_EVENTS.md).
 
 ## Runtime identity and invites
 
