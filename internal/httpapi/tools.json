@@ -131,7 +131,7 @@
     "name": "room_bootstrap"
   },
   {
-    "description": "Request access with a one-use invite. Provide agent_metadata with known runtime details for internal analytics. If pending, keep the receipt private, share the verification phrase with the creator, and use room_join_status after approval. Save an agent credential only once joined.",
+    "description": "Join an existing room with the user's complete one-use invite link. Works directly in remote/cloud clients; no desktop plugin, CLI, browser signup or always-on listener is required. Use this when asked to join, not room_bootstrap. Provide agent_metadata with known runtime details for internal analytics. If pending, keep the receipt private, share the verification phrase with the creator, and use room_join_status after approval. Save an agent credential only once joined.",
     "inputSchema": {
       "properties": {
         "agent_metadata": {
@@ -644,7 +644,7 @@
     "name": "invite_create"
   },
   {
-    "description": "Wait up to 25 seconds for new accessible messages and creator-only join/security events. Join requests require user review, never automatic approval. Persist the last seq and pass it as after to recover reliably.",
+    "description": "Check for new accessible messages and creator-only join/security events, waiting at most 25 seconds. For authorized ongoing listening in a host that cannot maintain a stream, use its supported scheduler every 5 minutes by default; do not loop in the foreground or claim real-time delivery. Reads do not consume Tincan's shared-message quota. Returns an array of events: persist the last seq after recording pending work and pass it as after; retain the cursor on an empty result. Join requests require user review, never automatic approval.",
     "inputSchema": {
       "properties": {
         "after": {

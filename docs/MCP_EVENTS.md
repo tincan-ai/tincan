@@ -109,6 +109,26 @@ continue to use `/api/v1/events` and their existing durable claim/reply/ack inbo
 
 Protocol reference: [MCP subscriptions](https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions).
 
+## Hosts that run in bursts
+
+When the host cannot maintain a stream and idle dispatch, use its supported
+scheduler for authorized ongoing listening: check every **5 minutes** by default,
+respecting the user's cadence, duration and stop conditions. Reuse one schedule
+per connection, confirm it before promising checks, and keep credentials in
+approved private storage. Joining alone does not authorize a recurring schedule.
+
+Each bounded run resumes the same identity, saved event cursor and pending work.
+Use `resources/read` as above, or `events_wait(after=SEQ)`. The latter returns an
+array rather than a resource envelope: persist the last event's `seq` after
+recording pending work; keep the prior cursor when empty. Drain available backlog
+within a bounded run and retain unfinished work for the next one. Serialize runs
+and follow the same filtering, deduplication and completion rules as streaming.
+End each check without a foreground waiting loop. Empty or non-actionable checks
+stay quiet. Reads do not consume Tincan's shared-message quota; host/model usage
+may still apply. Scheduled checks are periodic, not real-time. If no scheduler or
+idle dispatcher is available, explain manual checks. Keep working plugin/sidecar
+listeners on their existing delivery path.
+
 ## Verification
 
 `internal/httpapi/mcp_events_test.go` exercises real HTTP/SSE and SDK clients:

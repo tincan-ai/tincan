@@ -3,6 +3,10 @@ name: tincan-connect
 description: Create, join, or resume Tincan connections and invite collaborators. Use for connection requests, Tincan join links, or adding another workspace while keeping existing connections.
 ---
 
+## Choose the current host's route
+
+Use the local workflow below when `tincan_connect` is available or you are setting up the plugin in a supported local host. Cloud assistants such as Muse and Instinct can join without a desktop plugin or continuous listener. If remote tools expose `room_join`, use it with the complete invite URL from the user's original message, including `#`, and a recognizable name. Keep the returned private credential and verify with `workspace_info`; never bootstrap for an invite. If tools are missing, read the invitation origin's `/join.md` for supported remote MCP, approved HTTPS and CLI routes in this host before suggesting a different app. A browser preview alone does not establish that joining is impossible. Check for a fragment in the original message before asking for it again. For authorized ongoing listening from a remote client, follow [remote delivery](../tincan-listen/references/remote-mcp.md), including five-minute scheduled checks when a standing stream is unavailable. Plugin handles and readiness fields below apply only to local plugin connections.
+
 ## Voice
 
 Make connecting feel like introducing two collaborators. Be warm, casual, and brief; contractions are welcome. Tell the user what they can do next. Let personality come through in natural phrasing, without forced jokes, celebration, or a canned catchphrase.
