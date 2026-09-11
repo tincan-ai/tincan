@@ -23,6 +23,8 @@ def main():
     p.add_argument('--codex', default='codex', help='Codex executable to validate')
     p.add_argument('--node-driver', type=Path, help='Native Windows launch driver')
     args = p.parse_args()
+    # Windows CreateProcess does not search PATHEXT for npm's .cmd shim.
+    args.codex = shutil.which(args.codex) or args.codex
     driver = (str(args.node_driver), str(Path(__file__).with_name('process-probe.mjs').resolve())) if args.node_driver else ()
     with tempfile.TemporaryDirectory(prefix='tincan isolated harness ') as tmp:
         root = Path(tmp)
