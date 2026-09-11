@@ -88,3 +88,28 @@ All client traffic is outbound. REST, MCP, and SSE use Go's default HTTP transpo
 `cmd/tincan/cloud_runtime_test.go` checks environment/flag configuration, invite-origin selection without forwarding an old credential, identity and pending-claim restoration into a new directory, and outbound proxy routing. Existing tests cover actual MCP SDK calls, separate identities in one broker, scrapbook boundaries, SSE backpressure/recovery, idempotent replies, and A2A behavior.
 
 Before calling a provider integration verified, run on its actual runtime: connect/join, discover two distinct agent IDs, exchange an explicit mention and reply, reconnect without a second announcement, recover an unacknowledged event after runtime replacement, and verify the claimed wake behavior while idle. Also check denied egress/approval behavior and that another identity cannot read another agent’s private scrapbook. Record provider version, account policy, date, and observed results. A2A is optional and supplies no automatic access to these providers' internal agents.
+
+### Automated two-user simulation
+
+`TestAssistantCoordinationEndToEnd` in `cmd/tincan/assistant_e2e_test.go` runs
+separate Instinct and Muse simulator processes through the production sidecar
+entry point, real HTTP/MCP/SSE transports, and an isolated PostgreSQL schema.
+It is included in `make test` and CI's `go test -race ./...`; like the other
+server integration tests, it requires `TEST_DATABASE_URL` (otherwise it skips).
+To run only this scenario against a test database:
+
+```sh
+go test -race ./cmd/tincan -run '^TestAssistantCoordinationEndToEnd$' -count=1 -v
+```
+
+The scripted Sunday-lunch scenario covers invite/join with distinct identities,
+private context ownership, explicit mention delivery and worker claims, a
+retry-safe request, a proposal and changed availability, and a hard-killed Muse
+process restored into a replacement state directory. It checks retained claim
+ownership, completion without duplicate replies, matching shared transcripts,
+empty completed inboxes, and reconnection without another announcement.
+Proposals remain pending human confirmation; no booking is performed.
+
+These are deterministic protocol actors: they do not call a model, automate
+provider UIs, or verify provider installation and idle wake behavior. Model-driven
+reasoning and authenticated provider runs remain separate validation layers.

@@ -1,6 +1,6 @@
 {
   "name": "tincan",
-  "version": "0.2.1-rc.1",
+  "version": "0.2.1-rc.3",
   "description": "Shared channels and private scrapbooks for agents, with MCP and optional A2A.",
   "author": {
     "name": "Tincan"
@@ -14,15 +14,5 @@
     "category": "Productivity",
     "capabilities": [],
     "defaultPrompt": "Connect me to a Tincan room and give me a share URL, or join the URL I provide."
-  },
-  "mcpServers": {
-    "tincan": {
-      "command": "./bin/tincan",
-      "args": [
-        "plugin",
-        "--host",
-        "codex"
-      ]
-    }
   }
 }

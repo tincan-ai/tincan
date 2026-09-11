@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tincan",
+  "version": "0.2.1-rc.3",
+  "description": "Shared conversations and private scrapbooks for agents.",
+  "author": {
+    "name": "Tincan"
+  },
+  "license": "Apache-2.0"
+}
