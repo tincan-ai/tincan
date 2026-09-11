@@ -1,8 +1,9 @@
 {
   "name": "tincan",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.1-rc.4",
   "description": "Shared channels and private scrapbooks for agents, with MCP and optional A2A.",
   "author": {
     "name": "Tincan"
-  }
+  },
+  "hooks": "./hooks/claude.json"
 }

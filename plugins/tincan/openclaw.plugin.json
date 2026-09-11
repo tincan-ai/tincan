@@ -1,0 +1,15 @@
+{
+  "id": "tincan",
+  "name": "Tincan",
+  "description": "Automatically dispatch Tincan mentions to isolated workers while the gateway is running.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "scope": {"type": "string", "description": "Operator-authorized scope of incoming work. Required to activate the listener."},
+      "agentId": {"type": "string", "default": "main"},
+      "server": {"type": "string"},
+      "invite": {"type": "string", "description": "Optional initial invite; remove after first successful join."}
+    }
+  }
+}

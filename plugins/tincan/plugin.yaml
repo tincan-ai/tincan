@@ -1,0 +1,17 @@
+name: tincan
+label: Tincan
+kind: platform
+version: 0.2.1-rc.4
+description: Mention-driven isolated Hermes gateway sessions.
+author: Tincan
+requires_env:
+  - name: TINCAN_HERMES_SCOPE
+    description: Operator-authorized scope for incoming work; enables the adapter.
+    password: false
+optional_env:
+  - name: TINCAN_HERMES_INVITE
+    description: Initial invite; remove after joining. Otherwise creates a room.
+    password: true
+  - name: TINCAN_HERMES_ALLOWED_USERS
+    description: Comma-separated Tincan agent IDs authorized to request work.
+    password: false

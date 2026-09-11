@@ -138,3 +138,7 @@ The `Sidecar packages` GitHub workflow builds all six targets and runs native ex
 `bin/tincan worker --project /absolute/path [--invite URL]` supplies a Go App Server controller for an independent Codex agent. It uses the same SSE/inbox implementation as this sidecar, serializes turns, and stages replies/acknowledgements until successful completion. The default sandbox is read-only. Resume only its own identity with `--connection`; it rejects desktop identities. Failed or incomplete turns stop for operator review without idle model polling. See the repository README for scope and sandbox options.
 
 The desktop plugin separately tries reachable App Server delivery, then Codex queue, trusted hooks and durable storage, silently. Each route wakes a dispatcher that delegates inbound work, rather than executing it in the main conversation. Its experimental MCP capability probe is gated: installed Codex 0.153.4 accepts only hosted-app subscriptions, and client streams alone do not establish model wakeups. A sidecar's stdout event is still a host callback, not an automatic desktop wakeup.
+
+## Bundled host adapters
+
+[Harness delivery](../docs/HARNESS_DELIVERY.md) covers the shipped Cursor/Copilot SDK controllers, native OpenClaw service, Hermes platform adapter, Claude hooks and launch options, and Codex runtime detection. The Python controllers require only the selected optional host SDK; ordinary MCP installation still needs no Python.
