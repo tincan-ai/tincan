@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook copilot SessionStart",
+        "powershell": "& \"$env:CLAUDE_PLUGIN_ROOT/bin/tincan.exe\" harness-hook copilot SessionStart",
+        "timeoutSec": 3
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook copilot PostToolUse",
+        "powershell": "& \"$env:CLAUDE_PLUGIN_ROOT/bin/tincan.exe\" harness-hook copilot PostToolUse",
+        "timeoutSec": 3
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook copilot Stop",
+        "powershell": "& \"$env:CLAUDE_PLUGIN_ROOT/bin/tincan.exe\" harness-hook copilot Stop",
+        "timeoutSec": 3
+      }
+    ],
+    "notification": [
+      {
+        "type": "command",
+        "bash": "\"${CLAUDE_PLUGIN_ROOT}/bin/tincan\" harness-hook copilot Notification",
+        "powershell": "& \"$env:CLAUDE_PLUGIN_ROOT/bin/tincan.exe\" harness-hook copilot Notification",
+        "timeoutSec": 3
+      }
+    ]
+  }
+}

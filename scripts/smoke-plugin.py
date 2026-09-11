@@ -110,8 +110,18 @@ def main():
             result = probe([command, *entry['args']], env, root, driver)
             assert 'claude/channel' not in result['result'].get('capabilities', {}).get('experimental', {})
         versions = {json.loads((plugin / name).read_text())['version']
-                    for name in ('plugin.json', '.claude-plugin/plugin.json', '.codex-plugin/plugin.json')}
+                    for name in ('plugin.json', '.claude-plugin/plugin.json', '.codex-plugin/plugin.json', '.cursor-plugin/plugin.json', 'package.json') if (plugin / name).exists()}
         assert versions == {metadata['version']}, versions
+        for name in ('openclaw.plugin.json', 'plugin.yaml', 'native/openclaw/index.mjs',
+                     'native/hermes/adapter.py', 'sdk/python/run_cursor.py', 'sdk/python/run_copilot.py',
+                     'hooks/claude.json', 'hooks/cursor.json', 'com.github.copilot/hooks/hooks.json'):
+            assert (plugin / name).is_file(), name
+        assert json.loads((plugin / '.claude-plugin/plugin.json').read_text())['hooks'] == './hooks/claude.json'
+        for host, event in (('copilot', 'SessionStart'), ('cursor', 'SessionStart'), ('claude', 'SessionStart')):
+            result = subprocess.run([*driver, *command_for(plugin, '.mcp.json')[:1], 'harness-hook', host, event],
+                                    input=json.dumps({'session_id': 'smoke-session'}), text=True, capture_output=True, env=env, timeout=10)
+            assert result.returncode == 0 and 'hook_session_id' in result.stdout, result.stderr
+
         assert not (state / 'connections').exists(), 'discovery created credentials before the first prompt'
         # Exercise argument forwarding and local sidecar discovery separately.
         command = [*driver, *command_for(plugin, '.mcp.json')[:1]]

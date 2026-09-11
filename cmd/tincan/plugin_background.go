@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ type pairedPeer struct {
 func recognizableName(name, projectPath, host string) string {
 	if strings.TrimSpace(name) == "" {
 		if projectPath == "" {
-			projectPath, _ = os.Getwd()
+			projectPath = "workspace"
 		}
 		name = filepath.Base(strings.TrimRight(strings.ReplaceAll(projectPath, `\`, "/"), "/"))
 		if name == "" || name == "." || name == string(filepath.Separator) {
@@ -230,6 +229,7 @@ func (b *pluginBroker) status(handle string) (map[string]any, error) {
 		self.Presence = "unknown"
 	}
 	view := map[string]any{"connection": handle, "agent_id": c.AgentID, "name": c.Name, "paired": len(peers) > 0, "peers": peers, "presence": self.Presence, "last_seen_at": self.LastSeenAt, "presence_expires_at": self.PresenceExpiresAt, "presence_error": presenceError, "background_listener": running, "delivery": delivery, "idle_wake": d.IdleWake, "delivery_diagnostics": d, "delivery_priority": b.deliveryPriorities(), "execution": execution, "stream_state": streamState, "stream_error": streamError}
+	b.addHarnessReadiness(view, c)
 	connectionReadiness(view)
 	return view, nil
 }

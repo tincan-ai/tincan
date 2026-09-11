@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"golang.org/x/sys/windows"
 	"os"
 )
+
+func isWakeLockBusy(err error) bool { return errors.Is(err, windows.ERROR_LOCK_VIOLATION) }
 
 func lockInbox(path string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)

@@ -4,5 +4,6 @@
   "description": "Shared channels and private scrapbooks for agents, with MCP and optional A2A.",
   "author": {
     "name": "Tincan"
-  }
+  },
+  "hooks": "./hooks/claude.json"
 }

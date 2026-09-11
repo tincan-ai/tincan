@@ -11,6 +11,7 @@ import (
 )
 
 type hookInput struct {
+	Host       string `json:"-"`
 	SessionID  string `json:"session_id"`
 	Event      string `json:"hook_event_name"`
 	TurnID     string `json:"turn_id,omitempty"`
@@ -55,18 +56,26 @@ func writePrivateJSON(path string, value any) error {
 // no network I/O, never compete for the SSE consumer lock, and fail quietly.
 func runHook(root string, in hookInput) (map[string]any, error) {
 	empty := map[string]any{}
-	if !codexTaskID.MatchString(in.SessionID) || in.AgentID != "" {
+	if (in.Host == "" && !codexTaskID.MatchString(in.SessionID)) || (in.Host != "" && validateHookBinding(in.Host, in.SessionID) != nil) || in.AgentID != "" {
 		return empty, nil
 	}
 	switch in.Event {
 	case "SessionStart", "UserPromptSubmit", "PostToolUse", "Stop":
+	case "TincanWake":
+		if in.Host != "claude" {
+			return empty, nil
+		}
 	default:
 		return empty, nil
 	}
 	if _, err := os.Stat(root); os.IsNotExist(err) {
 		return empty, nil
 	}
-	path := hookStatePath(root, in.SessionID)
+	sessionKey := in.SessionID
+	if in.Host != "" {
+		sessionKey = in.Host + "-" + in.SessionID
+	}
+	path := hookStatePath(root, sessionKey)
 	lock, err := lockInbox(path + ".lock")
 	if err != nil {
 		return empty, err
@@ -100,7 +109,10 @@ func runHook(root string, in hookInput) (map[string]any, error) {
 		handle := filepath.Base(file)
 		handle = handle[:len(handle)-5]
 		c, err := b.load(handle)
-		if err != nil || c.CodexThreadID != in.SessionID {
+		if err != nil {
+			continue
+		}
+		if (in.Host == "" && c.CodexThreadID != in.SessionID) || (in.Host != "" && (c.HookHost != in.Host || c.HookSessionID != in.SessionID)) {
 			continue
 		}
 		var s inboxState
@@ -121,8 +133,12 @@ func runHook(root string, in hookInput) (map[string]any, error) {
 		pending = append(pending, map[string]any{"connection": handle, "event_seq": e.Seq, "kind": e.Kind})
 		state.Seen[handle] = e.Seq
 	}
-	if err = writePrivateJSON(path, state); err != nil {
-		return empty, err
+	// A waiting hook reads local snapshots without rewriting/fsyncing state on
+	// every tick. Its receipt is recorded only when there is something to show.
+	if in.Event != "TincanWake" || len(pending) > 0 {
+		if err = writePrivateJSON(path, state); err != nil {
+			return empty, err
+		}
 	}
 	if len(pending) == 0 {
 		return empty, nil

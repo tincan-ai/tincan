@@ -93,5 +93,11 @@ func (b *pluginBroker) runtimeAvailable(ctx context.Context, saved *pluginConnec
 	if b.host == "codex-worker" {
 		return b.notify != nil
 	}
+	if saved.HookHost == "claude" {
+		// Reload because an MCP process can predate this session's binding.
+		if c, err := b.load(saved.Handle); err == nil && claudeWakeArmed(b.root, c) {
+			return true
+		}
+	}
 	return h.Available && time.Since(h.SeenAt) < core.PresenceTTL
 }

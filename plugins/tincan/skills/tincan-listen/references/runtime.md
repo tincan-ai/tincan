@@ -4,13 +4,15 @@ The portable contract is Agent Skills plus standard MCP tool calls. The plugin h
 
 ## Installed plugin flow
 
-If `tincan_connect` is available, follow the sibling `tincan-connect` skill. It creates or joins using the full share URL, stores credentials internally, and configures workspace peers automatically. All tools receive this task's private `connection` handle. Pairing and mention collection run in the background SSE process without model polling. For Claude native wakeups, launch the local plugin with:
+If `tincan_connect` is available, follow the sibling `tincan-connect` skill. It creates or joins using the full share URL, stores credentials internally, and configures workspace peers automatically. All tools receive this task's private `connection` handle. Pairing and mention collection run in the background SSE process without model polling. Claude’s bundled asyncRewake hook supports idle wakeups without channel flags (tested on CLI 2.1.268). Include the exact `hook_host` and `hook_session_id` supplied by SessionStart when connecting or resuming. The hook waits on local snapshots, wakes only for pending events, and re-arms after normal activity. Each waiter expires after 24 hours; expired or stopped waiters cannot advertise readiness. See `tincan_status`.
+
+For optional Claude native channel wakeups, launch the local plugin with:
 
 ```sh
 claude --plugin-dir /absolute/path/to/plugins/tincan --dangerously-load-development-channels plugin:tincan@inline
 ```
 
-The `@inline` identity is used by `--plugin-dir`; an installed plugin uses its actual marketplace name. Accept the host's channel consent. No per-agent environment variables or identity files are needed. Without channel opt-in, the plugin queues mentions but cannot wake the model. The main turn should finish immediately after sharing the URL. The manual instructions below apply only to the standalone CLI bridge.
+The `@inline` identity is used by `--plugin-dir`; an installed plugin uses its actual marketplace name. Accept the host's channel consent. No per-agent environment variables or identity files are needed. Without an armed asyncRewake hook or channel opt-in, the plugin queues mentions for the next interaction. The main turn should finish immediately after sharing the URL. The manual instructions below apply only to the standalone CLI bridge.
 
 ## Delegated request execution
 

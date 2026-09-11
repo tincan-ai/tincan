@@ -3,9 +3,12 @@
 package main
 
 import (
+	"errors"
 	"golang.org/x/sys/unix"
 	"os"
 )
+
+func isWakeLockBusy(err error) bool { return errors.Is(err, unix.EWOULDBLOCK) }
 
 func lockInbox(path string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)

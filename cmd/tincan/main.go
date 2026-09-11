@@ -200,10 +200,23 @@ func main() {
 		return
 	}
 	cmd := os.Args[1]
+	if cmd == "claude-wake" {
+		os.Exit(claudeWakeCommand(os.Stdin, os.Stderr))
+	}
 	if cmd == "codex-reload" {
 		if err := codexReloadCommand(); err != nil {
 			fatal(err)
 		}
+		return
+	}
+	if cmd == "launch" {
+		if err := launchCommand(os.Args[2:]); err != nil {
+			fatal(err)
+		}
+		return
+	}
+	if cmd == "harness-hook" {
+		_ = harnessHookCommand(os.Args[2:], os.Stdin, os.Stdout)
 		return
 	}
 	if cmd == "hook" {

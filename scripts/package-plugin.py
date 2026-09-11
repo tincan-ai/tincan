@@ -20,13 +20,13 @@ def write_json(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n')
 
 
-def build(root, output, go, server, version, targets, marketplace=None):
+def build(root, output, go, server, version, targets, marketplace=None, harness=None):
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='tincan-release-') as tmp:
         plugin = Path(tmp) / 'tincan'
         shutil.copytree(root / 'plugins/tincan', plugin,
                         ignore=shutil.ignore_patterns('bin', '__pycache__', '.DS_Store', '.env', '.env.*'))
-        for manifest_name in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json', 'plugin.json'):
+        for manifest_name in ('.claude-plugin/plugin.json', '.codex-plugin/plugin.json', '.cursor-plugin/plugin.json', 'package.json', 'plugin.json'):
             path = plugin / manifest_name
             manifest = json.loads(path.read_text())
             manifest['version'] = version
@@ -57,8 +57,12 @@ def build(root, output, go, server, version, targets, marketplace=None):
             subprocess.run([go, 'build', '-trimpath', '-ldflags=-s -w',
                             '-o', str(plugin / 'bin/tincan.exe'), './cmd/tincan-launcher'], cwd=root,
                            env=dict(os.environ, GOOS='windows', GOARCH='386', CGO_ENABLED='0'), check=True)
+        if harness == 'cursor':
+            (plugin / 'plugin.json').unlink()  # Force native Cursor hooks, not portable MCP-only detection.
+        yaml_manifest = plugin / 'plugin.yaml'
+        yaml_manifest.write_text(re.sub(r'^version: .*$', 'version: ' + version, yaml_manifest.read_text(), flags=re.M))
         shutil.copy2(root / 'LICENSE', plugin / 'LICENSE')
-        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md', 'CLIENTS.md'):
+        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md', 'CLIENTS.md', 'HARNESS_DELIVERY.md', 'CLAUDE_WAKE.md'):
             (plugin / 'docs').mkdir(exist_ok=True)
             shutil.copy2(root / 'docs' / name, plugin / 'docs' / name)
         shutil.copytree(root / 'sdk', plugin / 'sdk', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
@@ -75,11 +79,13 @@ def build(root, output, go, server, version, targets, marketplace=None):
         write_json(plugin / 'release.json', {'version': version, 'server': server,
                    'targets': binaries, 'files': files, 'protocol': 'tincan/1', 'cgo': False})
         filename = 'tincan-plugin.zip' if targets == TARGETS else f'tincan-{targets[0]}.zip'
+        if harness:
+            filename = filename.replace('tincan-', 'tincan-' + harness + '-', 1)
         artifact = output / filename
         with zipfile.ZipFile(artifact, 'w', zipfile.ZIP_DEFLATED) as archive:
             for file in sorted(plugin.rglob('*')):
                 if file.is_file(): archive.write(file, file.relative_to(plugin.parent))
-        (output / 'SHA256SUMS').write_text(f'{hashlib.sha256(artifact.read_bytes()).hexdigest()}  {artifact.name}\n')
+        (output / 'SHA256SUMS').write_text(''.join(f'{hashlib.sha256(item.read_bytes()).hexdigest()}  {item.name}\n' for item in sorted(output.glob('*.zip'))))
         if marketplace:
             if marketplace.exists(): raise ValueError('marketplace output must be a fresh directory')
             shutil.copytree(plugin, marketplace / 'plugins/tincan')
@@ -105,6 +111,7 @@ def main():
     parser.add_argument('--server', default=os.environ.get('TINCAN_RELEASE_SERVER', 'https://app.gotincan.com'))
     parser.add_argument('--version')
     parser.add_argument('--target', choices=TARGETS, help='Optional single-platform developer package')
+    parser.add_argument('--harness', choices=['cursor'], help='Native Cursor package with hooks instead of portable MCP-only detection')
     parser.add_argument('--marketplace', type=Path, help='Write the complete marketplace tree for Git distribution')
     args = parser.parse_args()
     if not args.server:
@@ -118,7 +125,7 @@ def main():
         parser.error('version must be a semantic version')
     build(root, (args.output or root / 'dist/releases').resolve(), args.go,
           args.server.rstrip('/'), version, [args.target] if args.target else TARGETS,
-          args.marketplace.resolve() if args.marketplace else None)
+          args.marketplace.resolve() if args.marketplace else None, args.harness)
 
 
 if __name__ == '__main__':

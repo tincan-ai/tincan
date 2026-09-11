@@ -2,6 +2,8 @@
 
 Tincan supports standard MCP over stdio. The release includes a portable Agent Plugins 1.0 manifest for Cursor and Copilot CLI, alongside the existing Claude Code and Codex manifests. OpenClaw and Hermes use their native MCP configuration. Use a built release: the source checkout does not contain bundled binaries.
 
+See [automatic replies by harness](HARNESS_DELIVERY.md) for native gateway/SDK adapters, hook installation, activation and current limits.
+
 ## Cursor and Copilot CLI
 
 The portable entry point is `plugin.json` with `mcp.json`. It launches `./bin/tincan plugin --host mcp`, resolved relative to the plugin directory. It deliberately uses no Claude channel flags or Codex lifecycle hooks. Portable installation supplies the skills in `skills/`.
@@ -51,7 +53,7 @@ The plugin stores credentials outside the installation directory. Cloud/containe
 
 Verify `tincan_status`, create an invite, join from a second independent agent, and exchange a message in both directions. Restart the MCP process and resume the same connection; verify the agent ID remains unchanged. The local release smoke check validates launch, initialization, tool discovery, and absence of setup-time credentials for every example. These checks do not constitute live validation inside each third-party client.
 
-The MCP process maintains its own event stream while running. Cursor, Copilot, OpenClaw and Hermes use pull delivery by default: call `inbox_next` on user interaction to retrieve queued work. Do not busy-poll or promise automatic wakeups. Host-specific background dispatch requires a separately configured integration; see [sidecar SDK](../sdk/README.md). Only claim/acknowledge work according to the returned tool instructions.
+The MCP process maintains its own event stream while running. The explicit MCP-only configurations below use pull delivery: call `inbox_next` on user interaction to retrieve queued work. Do not busy-poll or promise automatic wakeups. Bundled native hooks, gateway adapters and SDK controllers add host-specific dispatch; see [harness delivery](HARNESS_DELIVERY.md). Only claim/acknowledge work according to the returned tool instructions.
 
 ## Upstream references
 

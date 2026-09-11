@@ -13,6 +13,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - run: node --test plugins/tincan/native/openclaw/index.test.mjs
       - run: go test -race ./...
       - name: Fuzz MCP claim responses and recovery
         run: go test ./cmd/tincan -run '^$' -fuzz '^FuzzMCPClaimMetadata$' -fuzztime 15s -parallel 2
@@ -22,3 +25,5 @@ jobs:
       - run: make plugin
       - run: python3 scripts/package-plugin.py --target linux-amd64 --server https://tincan-ci.invalid
       - run: python3 scripts/smoke-plugin.py dist/releases/tincan-linux-amd64.zip
+      - run: python3 scripts/package-plugin.py --target linux-amd64 --harness cursor --server https://tincan-ci.invalid
+      - run: python3 scripts/smoke-plugin.py dist/releases/tincan-cursor-linux-amd64.zip

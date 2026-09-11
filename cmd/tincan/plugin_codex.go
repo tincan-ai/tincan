@@ -122,6 +122,9 @@ func (b *pluginBroker) bindCodex(ctx context.Context, c *pluginConnection, threa
 		}
 		return nil
 	}
+	if c.HookHost != "" {
+		return errors.New("connection belongs to another harness session")
+	}
 	if thread == "" {
 		thread = c.CodexThreadID
 	}
@@ -141,7 +144,7 @@ func (b *pluginBroker) bindCodex(ctx context.Context, c *pluginConnection, threa
 	b.mu.Lock()
 	latest, err := b.load(c.Handle)
 	if err == nil {
-		if latest.CodexThreadID != "" && latest.CodexThreadID != thread {
+		if latest.HookHost != "" || (latest.CodexThreadID != "" && latest.CodexThreadID != thread) {
 			b.mu.Unlock()
 			return errors.New("connection belongs to another Codex task")
 		}

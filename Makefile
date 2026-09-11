@@ -10,3 +10,9 @@ test:
 	$(GO) test -race ./...
 	$(GO) vet ./...
 	python3 -m unittest discover -s sdk/python -p 'test_*.py'
+
+# Optional native adapter contract tests require Node.
+.PHONY: test-adapters
+test-adapters:
+	python3 -m unittest discover -s sdk/python -p 'test_*.py'
+	node --test plugins/tincan/native/openclaw/index.test.mjs

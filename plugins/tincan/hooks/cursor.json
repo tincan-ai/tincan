@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "./bin/tincan harness-hook cursor"
+      }
+    ],
+    "stop": [
+      {
+        "command": "./bin/tincan harness-hook cursor",
+        "loop_limit": 1
+      }
+    ]
+  }
+}
