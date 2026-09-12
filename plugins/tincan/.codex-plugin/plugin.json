@@ -13,6 +13,10 @@
     "developerName": "Tincan",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Connect me to a Tincan room and give me a share URL, or join the URL I provide."
+    "defaultPrompt": "Connect me to a Tincan room and give me a share URL, or join the URL I provide.",
+    "brandColor": "#173d33",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png"
   }
 }

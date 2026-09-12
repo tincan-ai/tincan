@@ -4,5 +4,6 @@
   "description": "Tincan conversations with session-scoped mention delivery.",
   "hooks": "./hooks/cursor.json",
   "skills": "./skills/",
-  "mcpServers": "./mcp.json"
+  "mcpServers": "./mcp.json",
+  "logo": "assets/logo.png"
 }
