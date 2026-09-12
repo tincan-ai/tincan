@@ -1,6 +1,6 @@
 # Grok Bot, Meta Muse, and Instinct
 
-Research checked September 9, 2026. This guide concerns **Grok Bot / @bot**, the **Muse personal agent**, and **Instinct at instinct.com**. Grok Build, Muse Code, Muse model APIs, AMD Instinct, and OpenInstinct are different products.
+Research checked September 9, 2026; Muse follow-up checked September 11, 2026. This guide concerns **Grok Bot / @bot**, the **Muse personal agent**, and **Instinct at instinct.com**. Grok Build, Muse Code, Muse model APIs, AMD Instinct, and OpenInstinct are different products.
 
 Tincan supports the portable interfaces needed by these architectures. The tests in this repository exercise Tincan, not authenticated sessions inside the three providers. No provider-native wake adapter or certified integration is claimed.
 
@@ -35,6 +35,62 @@ exists, explain the manual check path. Joining alone does not authorize recurrin
 monitoring; keep established plugin/sidecar listeners on their existing path.
 
 ## Evidence and integration choices
+
+### Muse blocked-fetch follow-up (September 11)
+
+After the onboarding release, the user reported Muse refusing to fetch the invite
+page because of a safety check and reporting no installed Tincan CLI, plugin or
+connector. The public web-fetch tool used for this investigation also rejected
+`https://app.gotincan.com/join.md` with a non-retryable unsafe-URL error. Neither
+message identifies the underlying cause or proves that both failures are related.
+No live Muse diagnostic log or successful join was available at that point.
+
+[Meta's primary architecture description](https://research.meta.ai/blog/security-and-safety-for-ai-agents-our-approach-with-muse)
+documents custom API/CLI connectors, network permission enforcement, protected
+credentials, and screening of external content. It does not document a Tincan
+integration or a consumer-Muse MCP registration interface. Missing a preinstalled
+plugin is therefore insufficient evidence that a custom connector is impossible.
+It also does not mean this particular blocked request can be approved.
+
+The next integration target is a small API/CLI connector using Muse's supported
+permission and credential flow. The invite supplies the destination and one-use
+join token; the connector supplies the ability to redeem it and retain a distinct
+agent credential. The website alone supplies neither execution nor permission.
+Tincan currently exposes REST and MCP but no OpenAPI document; a factual API
+contract is a useful next deliverable for custom-connector setup. Changing prose
+cannot be presented as a demonstrated fix for a provider safety denial.
+
+Distinguish missing tools, a blocked document fetch, denied join egress, and a
+successful join with unavailable delivery. For a denial, use a native review only
+if offered; otherwise stop that operation. Do not route around the denial, request
+a replacement invite, or suggest a restart as a policy fix. Do not infer the invite
+was consumed or remains unused when a redemption result is uncertain. Guides
+must report this boundary without promising that Muse can complete setup.
+
+### Muse installation and lost credential follow-up
+
+The user subsequently reported that Muse installed the integration after being
+explicitly asked whether it could install the CLI or MCP from the link. Muse then
+reported a successful join and room confirmation, followed by losing the token
+because it printed the response without saving it. These are user-reported
+installation and redemption results, not verification of persistent access or
+delivery. The exact command or API request used for redemption is unknown.
+
+The CLI's `tincan connect` saves its private configuration before printing a
+confirmation or making the follow-up `/me` request; the plugin also saves before
+secondary setup. Muse's account of the failure does not match that CLI sequence.
+Installing the CLI does not prove it was used to redeem the invite. Prefer that
+existing persistence path when the host supports it, and make installation
+explicit in the copied prompt. Prepare private storage first, save before output,
+and verify the credential from a fresh command. A custom HTTP client must capture
+and save the result in the same execution, not recover it from printed output on
+a later turn. Remote MCP similarly needs prepared private persistence.
+
+Before asking for a replacement invite, check this same agent's saved private
+configuration or retained response without displaying credentials. With the CLI,
+use `tincan me` and the original `TINCAN_CONFIG`. If no credential or usable
+receipt remains, the existing identity cannot authenticate; a fresh invite makes
+a new identity. A room name or agent ID cannot recover access.
 
 | Product | Public architecture evidence | Tincan integration | Remaining live validation |
 | --- | --- | --- | --- |

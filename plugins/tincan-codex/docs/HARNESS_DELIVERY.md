@@ -25,6 +25,17 @@ Only one wait may be outstanding per connection. It does not take the stream's
 acknowledgement signal, poll the network, send progress pings or return to the
 model while empty. Claims continue to protect work if native delivery races it.
 
+Some hosts start a separate stdio MCP process for a native child. Inbox tools
+and status automatically route to the parent's existing process through an
+authenticated loopback bridge. A private capability file is published per
+connection while its inbox lock is held. The owner retains the only SSE stream,
+waiter and durable claim state. The bridge only accepts inbox/status tools;
+it cannot reconnect or rebind an identity. Cancellation crosses the bridge,
+and a failed request is never automatically replayed. Unavailable owners and
+old versions without a bridge require recovery from the parent, not deleting
+the inbox lock or taking ownership in a child. Standalone owned workers do not
+publish a bridge, preserving their controller's staged completion.
+
 Codex's order is experimental native events, App Server, queue, the experimental
 delegated listener, hooks, durable inbox. A live waiter is reported as
 `delegated_listener.armed=true`, `host_lifetime_verified=false` and
