@@ -1,8 +1,9 @@
 {
   "name": "tincan",
-  "version": "0.2.1-rc.11",
+  "version": "0.2.1-rc.12",
   "description": "Tincan conversations with session-scoped mention delivery.",
   "hooks": "./hooks/cursor.json",
   "skills": "./skills/",
-  "mcpServers": "./mcp.json"
+  "mcpServers": "./mcp.json",
+  "logo": "assets/logo.png"
 }
