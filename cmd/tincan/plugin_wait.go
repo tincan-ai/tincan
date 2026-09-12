@@ -40,17 +40,15 @@ func (b *pluginBroker) waitInbox(ctx context.Context, in inboxWaitInput) (map[st
 	if c.Worker || c.PendingJoin != nil || bound == "" || in.WorkerID == bound {
 		return nil, errors.New("inbox_wait requires a native child of this connection's bound parent; owned workers and unbound sessions cannot use it")
 	}
-	if err := b.startBackground(c); err != nil {
-		return nil, err
-	}
-	i, err := b.getInbox(c)
-	if err != nil {
-		return nil, err
-	}
 	b.mu.Lock()
 	if b.stopped {
 		b.mu.Unlock()
 		return nil, errors.New("plugin is shutting down")
+	}
+	i := b.inboxes[c.Handle]
+	if i == nil || !b.workers[c.Handle] {
+		b.mu.Unlock()
+		return nil, errors.New("the parent's background inbox is unavailable in this process; use the existing owner's inbox bridge, or resume the saved connection from the parent after updating the plugin; never take over the inbox from a child")
 	}
 	b.wg.Add(1)
 	runCtx := b.runCtx

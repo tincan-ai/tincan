@@ -4,9 +4,11 @@ description: Dispatch inbound Tincan requests to background subagents or isolate
 license: Apache-2.0
 ---
 
+Read the [shared setup and collaboration contract](../tincan-connect/references/setup-contract.md) before proceeding. It defines authorized coordination, quiet replies, pending decisions, verification and welcome text. Use only the method-specific instructions needed below.
+
 Check the connection mode first. If only a direct remote MCP connection is available, use [remote subscriptions](references/remote-mcp.md) and the host's supported dispatcher. The plugin-specific readiness fields, connection handles, inbox tools and delegated-listener workflow below apply when the local plugin exposes them. A plugin connection already has its own event stream; do not add a remote subscription for that identity.
 
-Keep user updates warm and conversational. Focus on what a collaborator said, completed, or needs from the user. Use a recognizable name or role when known; omit generated identity suffixes and protocol details unless needed to distinguish agents or troubleshoot. A routine receipt needs no announcement. Avoid log-style replies such as “Paired. The peer is …, and shared channels are live.” If a connection update is useful, say something like “Claude has joined. You can work together now,” only after pairing is confirmed. Do not invent a collaborator name or claim that queued messages will wake this host.
+Keep user updates warm and conversational. Focus on what a collaborator said, completed, or needs from the user. Use a recognizable name or role when known; omit generated identity suffixes and protocol details unless needed to distinguish agents or troubleshoot. A routine receipt needs no announcement. Avoid log-style replies such as “Paired. The peer is …, and shared channels are live.” If a connection update is useful, say something like “Claude has joined,” only after pairing is confirmed. Claim a successful exchange only after a real reply, and future replies only after verified host delivery. Do not invent a collaborator name or claim that queued messages will wake this host.
 
 In Codex, read `CODEX_THREAD_ID` in the current task's shell and pass that UUID as `codex_thread_id` to `tincan_connect`. Never ask the user for an ID or use a shared MCP process's environment to identify a task. Each connection stays bound to its originating task.
 
@@ -29,7 +31,7 @@ When the user asks to listen, confirm the background listener with a single `tin
 
 ## Experimental persistent listener
 
-On every create, join, resume, or listen request without higher-priority wake delivery, automatically use [the persistent-listener workflow](references/persistent-listener.md). Starting the listener is part of connecting; do not ask for opt-in. It requires native background execution, access to the parent's existing MCP connection, and a suitable host tool timeout. A fallback to ordinary hooks or the durable inbox requires this setup attempt before finishing the turn. Reuse a live child, including one currently handling a request; never duplicate it. Keep established native wake routes preferred. `delegated_listener.armed` reports a live tool call, not verified survival after the parent finishes; `readiness=experimental` must not be described as verified automatic replies.
+On every create, join, resume, or listen request without higher-priority wake delivery, automatically use [the persistent-listener workflow](references/persistent-listener.md). Starting the listener is part of connecting; do not ask for opt-in. It requires native background execution, access to the parent's existing connection (shared MCP process or the plugin's private local inbox bridge), and a suitable host tool timeout. A fallback to ordinary hooks or the durable inbox requires this setup attempt before finishing the turn. Reuse a live child, including one currently handling a request; never duplicate it. Keep established native wake routes preferred. `delegated_listener.armed` reports a live tool call, not verified survival after the parent finishes; `readiness=experimental` must not be described as verified automatic replies.
 
 ## Background delegation
 

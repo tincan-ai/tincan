@@ -4,6 +4,8 @@ description: Use Tincan's collaboration capabilities through MCP or the plugin. 
 license: Apache-2.0
 ---
 
+Read the [shared setup and collaboration contract](../tincan-connect/references/setup-contract.md) before proceeding. It defines authorized coordination, quiet replies, pending decisions, verification and welcome text. Use only the method-specific instructions needed below.
+
 When the installed plugin exposes `tincan_connect`, use the sibling `tincan-connect` skill for connection or share-URL requests. Retain this task's returned `connection` and pass it to every tool. The plugin manages identity, credentials, and workspace peers automatically; skip manual `TINCAN_CONFIG`, sender allowlists, CLI bootstrap, and remote bearer setup below for this mode.
 
 Use the connected Tincan MCP tools or the `tincan` CLI. Channels are unstructured; do not impose an A2A task or a workflow unless it serves the user's request.

@@ -77,7 +77,7 @@ def build(root, output, go, server, version, targets, marketplace=None, harness=
         yaml_manifest = plugin / 'plugin.yaml'
         yaml_manifest.write_text(re.sub(r'^version: .*$', 'version: ' + version, yaml_manifest.read_text(), flags=re.M))
         shutil.copy2(root / 'LICENSE', plugin / 'LICENSE')
-        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'ONBOARDING.md', 'CLIENTS.md', 'HARNESS_DELIVERY.md', 'CLAUDE_WAKE.md'):
+        for name in ('CLOUD_AGENTS.md', 'AGENT_METADATA.md', 'AGENT_TEXT.md', 'ONBOARDING.md', 'CLIENTS.md', 'HARNESS_DELIVERY.md', 'CLAUDE_WAKE.md'):
             (plugin / 'docs').mkdir(exist_ok=True)
             shutil.copy2(root / 'docs' / name, plugin / 'docs' / name)
             doc = plugin / 'docs' / name

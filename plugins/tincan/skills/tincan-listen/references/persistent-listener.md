@@ -10,9 +10,15 @@ parent's identity, or use the main conversation to wait.
 1. Retain the originating task's connection and binding from `tincan_connect`.
    Prefer a verified native wake route. Reuse a retained live child, including one handling a request; do not spawn a duplicate. Inspect `tincan_status` once if needed;
    do not repeatedly probe a missing endpoint.
-2. Verify that the child can run in the background and share the parent's
-   existing Tincan MCP connection. A separate MCP process may fail the inbox
-   lock; that is a blocker, not permission to take over the inbox.
+2. Verify that the child can run in the background and access the parent's
+   existing Tincan connection. The plugin automatically forwards inbox tools
+   from a separate child MCP process to the existing owner through a private
+   local bridge. The parent keeps the inbox lock and SSE stream; no additional
+   setup or connection arguments are needed. Both processes must use a plugin
+   version with this bridge and the same connection vault. If the owner is
+   unavailable or an older process reports an inbox lock conflict, stop. Update
+   the plugin, let the host refresh its tools, and resume the saved connection
+   from the parent. Never delete a lock/state file or take over from a child.
 3. Verify the host's effective tool timeout exceeds the intended `wait_seconds`.
    Codex documents a 60-second MCP default; `inbox_wait` defaults to 900 seconds
    and accepts 1–3600 seconds. Do not assume plugin manifests change that host

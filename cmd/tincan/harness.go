@@ -53,6 +53,7 @@ func (b *pluginBroker) bindHook(c *pluginConnection, host, session string) error
 // No receipt of a lifecycle hook proves idle delivery. The hook carries only
 // routing pointers, and the binding is supplied by the session, not shared MCP env.
 func (b *pluginBroker) addHarnessReadiness(view map[string]any, c *pluginConnection) {
+	b.addInboxBridgeReadiness(view, c.Handle)
 	host := c.HookHost
 	if host == "" {
 		host = b.host

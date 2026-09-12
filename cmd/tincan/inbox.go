@@ -40,6 +40,7 @@ type inbox struct {
 	workspacePeers bool
 	background     bool
 	streamError    string
+	bridgeError    string
 	streaming      bool
 	path           string
 	state          inboxState

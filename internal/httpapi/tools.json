@@ -8,7 +8,7 @@
     "name": "workspace_claim"
   },
   {
-    "description": "Create a new room and agent without browser sign-in. Returns room_name, a ready one-use 24-hour share_url and a creator-only 15-minute claim_url; show both links immediately in a short welcome. Retain the private connection credential for subsequent calls. If already connected, use workspace_info instead. To join an existing workspace, use room_join with its invite. Provide agent_metadata with known runtime details for internal analytics.",
+    "description": "Create a new room and agent without browser sign-in. Returns room_name, a ready one-use 24-hour share_url and a creator-only 15-minute claim_url; save and reload the private connection before reporting success. Show relevant links using the shared welcome instructions; discover existing collaborators before offering another invitation. Retain the private connection credential for subsequent calls. If already connected, use workspace_info instead. To join an existing workspace, use room_join with its invite. Provide agent_metadata with known runtime details for internal analytics.",
     "inputSchema": {
       "properties": {
         "agent_metadata": {
@@ -131,7 +131,7 @@
     "name": "room_bootstrap"
   },
   {
-    "description": "Join an existing room with the user's complete one-use invite link. Works directly in remote/cloud clients; no desktop plugin, CLI, browser signup or always-on listener is required. Use this when asked to join, not room_bootstrap. Provide agent_metadata with known runtime details for internal analytics. If pending, keep the receipt private, share the verification phrase with the creator, and use room_join_status after approval. Save an agent credential only once joined.",
+    "description": "Join an existing room with the user's complete one-use invite link. Works directly in remote/cloud clients; no desktop plugin, CLI, browser signup or always-on listener is required. Use this when asked to join, not room_bootstrap. Prepare approved private credential storage before calling: immediately save the returned connection before displaying results or making follow-up requests, then reload it and verify with workspace_info. Never print the credential or redeem the invite again to recover a successful join. Prefer tincan_connect or tincan connect when available because they save credentials for you. Provide agent_metadata with known runtime details for internal analytics. If pending, save the receipt privately before sharing the verification phrase with the creator and use room_join_status after approval.",
     "inputSchema": {
       "properties": {
         "agent_metadata": {
@@ -364,7 +364,7 @@
     "name": "agent_metadata_update"
   },
   {
-    "description": "Check a pending join with its private receipt and collect your credential after creator approval. A receipt cannot access any workspace data.",
+    "description": "Check a pending join with its saved private receipt and collect your credential after creator approval. Prepare private storage first; save the returned connection before displaying results or making follow-up requests, then verify using the saved credential. Never print the credential. A receipt cannot access any workspace data.",
     "inputSchema": {
       "properties": {
         "receipt": {

@@ -69,6 +69,8 @@ type pluginBroker struct {
 	root, server      string
 	mu                sync.Mutex
 	inboxes           map[string]*inbox
+	toolServer        *mcp.Server
+	inboxOwner        *pluginInboxOwner
 	host              string
 	native            bool
 	notify            func(context.Context, map[string]any) error
@@ -414,6 +416,11 @@ func (b *pluginBroker) getInbox(c *pluginConnection) (*inbox, error) {
 		return nil, err
 	}
 	b.inboxes[c.Handle] = i
+	if err := b.publishInboxOwner(c); err != nil {
+		// A host can forbid local listeners while still supporting native wake
+		// delivery. Preserve its SSE inbox and expose the bridge limitation.
+		i.bridgeError = err.Error()
+	}
 	return i, nil
 }
 func (b *pluginBroker) close() {
@@ -422,7 +429,11 @@ func (b *pluginBroker) close() {
 	if b.cancel != nil {
 		b.cancel()
 	}
+	owner := b.inboxOwner
 	b.mu.Unlock()
+	if owner != nil {
+		owner.close()
+	}
 	b.wg.Wait()
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -671,6 +682,7 @@ func (b *pluginBroker) serverWithTools(remoteTools []*mcp.Tool) *mcp.Server {
 			return session.CallTool(ctx, &mcp.CallToolParams{Name: tool.Name, Arguments: args})
 		})
 	}
+	b.addInboxOwnerRouting(server)
 	return server
 }
 
